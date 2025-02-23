@@ -1,0 +1,324 @@
+/* .navbar {
+    width: 100%;
+    min-height: 100vh;
+    background: #eceaff;
+    color: #525252;
+} */
+
+nav {
+    background: linear-gradient(135deg, #000000, #2E2E2E);
+    width: 100%;
+    height: clamp(60px, 8vh, 80px);
+    padding: clamp(0.5rem, 2vw, 1rem) clamp(1rem, 5vw, 10%);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    margin-left: max(-12%, -60px);
+}
+
+.logo-image {
+    width: clamp(100px, 15vw, 150px);
+    height: clamp(100px, 15vw, 150px);
+    margin-right: -35px;
+    /* Negative margin to reduce gap */
+    object-fit: contain;
+    /* Ensures the image fits within its container without stretching */
+}
+
+.logo {
+    font-size: clamp(18px, 2.5vw, 25px);
+    color: white;
+    line-height: 1;
+    /* Aligns the text properly with the image */
+}
+
+
+
+.user-pic {
+    width: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    margin-left: 30px;
+}
+
+nav ul {
+    display: flex;
+    text-align: right;
+    justify-content: flex-end;
+    align-items: center;
+    margin-left: auto;
+    /* Push the list to the right */
+}
+
+nav ul li {
+    display: inline-block;
+    list-style: none;
+    margin: 10px 20px;
+}
+
+nav ul li a {
+    color: #ffffff;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    /* Align icons with text */
+}
+
+nav ul li a svg {
+    margin-right: 8px;
+    /* Added spacing between SVG icons and text */
+    font-size: 18px;
+    vertical-align: middle;
+    /* Ensure vertical alignment with text */
+}
+
+.icon {
+    width: 18px;
+    height: 18px;
+}
+
+.sub-menu-wrap {
+    position: absolute;
+    top: 100%;
+    right: 10%;
+    width: 320px;
+    max-height: 0px;
+    overflow: hidden;
+    transition: max-height 0.5s;
+    z-index: 1000;
+    /* Ensure dropdown is above other components */
+}
+
+.sub-menu-wrap.open-menu {
+    max-height: 400px;
+    z-index: 1000;
+    /* Ensure dropdown is above other components */
+}
+
+.sub-menu {
+    background: linear-gradient(135deg, #000000, #2E2E2E);
+    color: #fff;
+    padding: 20px;
+    margin: 10px;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+}
+
+.user-info h3 {
+    font-weight: 500;
+}
+
+.user-info img {
+    width: 60px;
+    border-radius: 50%;
+    margin-right: 15px;
+}
+
+.sub-menu hr {
+    border: 0;
+    height: 1px;
+    width: 100%;
+    background: #ccc;
+    margin: 15px 0 10px;
+}
+
+.sub-menu-link {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: #fff;
+    margin: 12px 0;
+}
+
+.sub-menu-link p {
+    width: 100%;
+}
+
+.sub-menu-link img {
+    width: 40px;
+    background: #e5e5e5;
+    border-radius: 50%;
+    padding: 8px;
+    margin-right: 15px;
+}
+
+.sub-menu-link span {
+    font-size: 22px;
+    transition: transform 0.5s;
+}
+
+.sub-menu-link:hover span {
+    transform: translateX(5px);
+}
+
+.sub-menu-link:hover p {
+    font-weight: 600;
+}
+
+.menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.close-menu {
+    display: none;
+}
+
+/* Max-width: 992px (Medium screens) */
+@media (max-width: 992px) {
+    nav {
+        padding: 10px 3%;
+    }
+
+    .logo-container {
+        margin-left: -30px;
+    }
+
+    .logo-image {
+        width: 120px;
+        height: 120px;
+        margin-right: -10px;
+    }
+
+    nav ul li {
+        margin: 10px 15px;
+    }
+
+    .user-pic {
+        margin-left: 0px;
+    }
+
+    .sub-menu-wrap {
+        right: 5%;
+        width: 280px;
+    }
+}
+
+/* Max-width: 768px (Tablet screens) */
+@media (max-width: 768px) {
+    nav ul li {
+        display: none;
+    }
+
+    .menu-toggle {
+        display: block;
+        margin-left: 18px;
+        position: absolute;
+        /* Ensures it doesn't push other elements */
+        right: 20px;
+        /* Adjust based on layout */
+    }
+
+    .user-pic {
+        position: absolute;
+        /* Keeps it from shifting */
+        right: 55px;
+        /* Adjust based on layout */
+    }
+
+    /* Mobile Menu Styles */
+    .nav-links {
+        position: fixed;
+        top: 0;
+        right: -100%;
+        /* Initially hidden */
+        width: min(300px, 80vw);
+        height: 100vh;
+        background: #111;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: flex-start;
+        padding: clamp(2rem, 5vh, 4rem) clamp(1rem, 3vw, 2rem);
+        transition: right 0.3s ease-in-out;
+        z-index: 999;
+    }
+
+    .nav-links.active {
+        right: 0;
+        /* Slide in */
+    }
+
+    /* Close Button Inside the Menu */
+    .close-menu {
+        display: block;
+        position: absolute;
+        top: 15px;
+        right: 20px;
+        background: none;
+        border: none;
+        font-size: 24px;
+        color: white;
+        cursor: pointer;
+    }
+
+    /* Menu Links */
+    .nav-links li {
+        display: block;
+        margin: 15px 0;
+    }
+
+    .nav-links a {
+        font-size: 18px;
+        color: white;
+    }
+
+    /* Mobile Menu Toggle */
+    .menu-toggle {
+        display: block;
+        position: absolute;
+        right: 20px;
+        background: none;
+        border: none;
+        font-size: 24px;
+        color: white;
+        cursor: pointer;
+    }
+
+    .nav-links {
+        gap: clamp(0.5rem, 2vw, 1.5rem);
+    }
+}
+
+/* Max-width: 576px (Mobile screens) */
+@media (max-width: 576px) {
+
+    .logo {
+        position: absolute;
+        left: 100px;
+        font-size: 20px;
+        display: none;
+    }
+
+}
+
+/* Max-width: 480px (Mobile screens) */
+@media (max-width: 480px) {
+
+    .logo-container {
+        margin-left: 0;
+    }
+
+}
+
+/* Max-width: 350px (Small mobile screens) */
+@media (max-width: 350px) {
+
+    .logo {
+        display: none;
+    }
+
+}

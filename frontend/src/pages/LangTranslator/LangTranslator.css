@@ -1,0 +1,334 @@
+/* Full page container */
+.page-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  overflow-y: auto;
+  position: relative;
+}
+
+/* Main translator container */
+.translator-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  padding: 40px;
+  padding-top: 100px;
+  /* Space for fixed navbar */
+  background-color: #f7f7f7;
+  font-family: Arial, sans-serif;
+  color: #00796b;
+}
+
+/* Title */
+.translator-title {
+  font-size: 36px;
+  font-weight: bold;
+  margin-bottom: 30px;
+}
+
+/* Language selectors */
+.language-selectors {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+/* Dropdown styles */
+.language-dropdown {
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 20px;
+  color: #00796b;
+  width: 180px;
+  background-color: #f0f0f0;
+}
+
+/* Exchange icon */
+.exchange-icon {
+  font-size: 30px;
+  color: #00796b;
+  cursor: pointer;
+}
+
+/* Text areas container */
+.text-areas {
+  display: flex;
+  gap: 40px;
+  justify-content: center;
+  width: 100%;
+  max-width: 90%;
+  margin-bottom: 20px;
+}
+
+/* Text input area */
+.text-input {
+  width: 45%;
+  height: 50vh;
+  padding: 20px;
+  background-color: #333;
+  color: #00796b;
+  border-radius: 10px;
+  border: none;
+  font-size: 20px;
+  resize: none;
+  overflow-y: auto;
+}
+
+/* Translated text area */
+.translated-text {
+  width: 45%;
+  height: 50vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #333;
+  color: #00796b;
+  border-radius: 10px;
+  font-size: 20px;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+/* Action buttons container */
+.action-buttons {
+  display: flex;
+  gap: 20px;
+  margin-top: 20px;
+  width: 100%;
+  justify-content: center;
+}
+
+/* Button styles */
+.translate-button,
+.clear-button {
+  padding: 10px 20px;
+  font-size: 18px;
+  border: none;
+  border-radius: 5px;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Translate button */
+.translate-button {
+  background-color: #00796b;
+}
+
+/* Clear button */
+.clear-button {
+  background-color: #e53935;
+}
+
+/* Button hover effects */
+.translate-button:hover {
+  background-color: #005f51;
+}
+
+.clear-button:hover {
+  background-color: #c62828;
+}
+
+/* Large Desktops (1440px and up) */
+@media (min-width: 1440px) {
+ 
+  .translator-container {
+    padding: 60px;
+    padding-top: 20px;
+  }
+
+  .text-areas {
+    max-width: 80%;
+    gap: 60px;
+  }
+
+  .translator-title {
+    font-size: 42px;
+  }
+  
+}
+
+/* Regular Desktops (1200px to 1439px) */
+@media (max-width: 1439px) {
+  .text-areas {
+    max-width: 85%;
+    gap: 50px;
+  }
+}
+
+/* Small Desktops and Large Tablets (992px to 1199px) */
+@media (max-width: 1199px) {
+
+  .translator-container {
+    padding: 30px;
+    padding-top: 100px;
+  }
+
+  .text-areas {
+    max-width: 90%;
+    gap: 40px;
+  }
+
+  .translator-title {
+    font-size: 32px;
+  }
+}
+
+/* Tablets (768px to 991px) */
+@media (max-width: 991px) {
+  .translator-container {
+    padding: 25px;
+    /* padding-top: 90px; */
+  }
+
+  .text-areas {
+    max-width: 95%;
+    gap: 30px;
+  }
+
+  .language-dropdown {
+    width: 150px;
+    font-size: 18px;
+  }
+
+  .text-input,
+  .translated-text {
+    font-size: 18px;
+  }
+}
+
+/* Large Phones (576px to 767px) */
+@media (max-width: 767px) {
+  .translator-container {
+    padding: 20px;
+    /* padding-top: 80px; */
+  }
+
+  .translator-title {
+    font-size: 28px;
+    margin-bottom: 20px;
+  }
+
+  .language-selectors {
+    flex-direction: row;
+    gap: 15px;
+  }
+
+  .language-dropdown {
+    width: 200px;
+  }
+
+  .text-areas {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .text-input,
+  .translated-text {
+    width: 100%;
+    height: 35vh;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 15px;
+    margin: 20px 20px 40px;
+    padding: 0 20px;
+  }
+
+  .translate-button,
+  .clear-button {
+    justify-content: center;
+    width: 100%;
+    padding: 12px 20px;
+  }
+}
+
+/* Small Phones (575px and below) */
+@media (max-width: 575px) {
+  .translator-container {
+    padding: 15px;
+    /* padding-top: 70px; */
+  }
+  .language-selectors {
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .translator-title {
+    font-size: 24px;
+    text-align: center;
+  }
+
+  .language-dropdown {
+    width: 180px;
+    font-size: 16px;
+    padding: 10px;
+  }
+
+  .text-input,
+  .translated-text {
+    height: 30vh;
+    font-size: 16px;
+    padding: 15px;
+  }
+
+  .action-buttons {
+    margin: 15px 10px 30px;
+    padding: 0 10px;
+  }
+
+  .translate-button,
+  .clear-button {
+    font-size: 16px;
+    padding: 10px 16px;
+    width: 100%;
+  }
+}
+
+/* Extra Small Phones (350px and below) */
+@media (max-width: 350px) {
+  .translator-container {
+    padding: 12px;
+    /* padding-top: 65px; */
+  }
+
+  .translator-title {
+    font-size: 22px;
+  }
+
+  .language-dropdown {
+    width: 160px;
+    font-size: 14px;
+  }
+
+  .text-input,
+  .translated-text {
+    height: 25vh;
+    font-size: 14px;
+    padding: 12px;
+  }
+
+  .action-buttons {
+    margin: 12px 8px 25px;
+    padding: 0 8px;
+    gap: 10px;
+  }
+
+  .translate-button,
+  .clear-button {
+    font-size: 14px;
+    padding: 8px 12px;
+    width: 100%;
+  }
+}

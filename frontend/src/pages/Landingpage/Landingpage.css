@@ -1,0 +1,685 @@
+.main {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.lpvideo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover;
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.header-contents {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  /* Align items to the start (left) */
+  justify-content: center;
+  /* Vertically center the contents */
+  gap: 0.5vw;
+  /* Add gap between elements */
+  max-width: 66%;
+  bottom: 35%;
+  left: 6vw;
+  animation: fadeIn 3s;
+
+}
+
+.heading {
+  font-weight: 500;
+  color: white;
+  font-size: max(4.8vw, 24px);
+  /* Increased size */
+  text-transform: uppercase;
+}
+
+.sub-heading {
+  font-weight: 500;
+  color: white;
+  font-size: max(3.5vw, 18px);
+  /* Decreased size */
+}
+
+.para {
+  color: white;
+  font-size: 1.2vw;
+  margin-top: 10px;
+}
+
+.signbtn {
+  border: none;
+  color: #747474;
+  font-weight: 500;
+  padding: 0.8vw 2vw;
+  /* Decreased padding */
+  background-color: white;
+  border-radius: 50px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.signbtn:hover {
+  color: #ff0000;
+}
+
+/* Signin Signup */
+
+.sign-container {
+  --linear-grad: linear-gradient(to right, #141E30, #243B55);
+  --grad-clr1: #141E30;
+  --grad-clr2: #243B55;
+
+  position: absolute;
+  top: 50%;
+  /* Center vertically */
+  left: 50%;
+  /* Center horizontally */
+  transform: translate(-50%, -50%);
+  /* Adjust position to center */
+  width: 850px;
+  height: 500px;
+  background-color: #fff;
+  box-shadow: 25px 30px 55px rgba(85, 85, 85, 0.5);
+  border-radius: 13px;
+  overflow: hidden;
+}
+
+
+.form-section {
+  position: absolute;
+  width: 60%;
+  height: 100%;
+  padding: 0 40px;
+  transition: all 0.6s ease-in-out;
+}
+
+.signup-section {
+  opacity: 0;
+  z-index: 1;
+}
+
+.signin-section {
+  z-index: 2;
+}
+
+.form-section form {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 50px;
+}
+
+.form-section h1 {
+  color: var(--grad-clr1);
+}
+
+.social-links {
+  display: flex;
+  gap: 10px;
+  /* Instead of margin, use gap */
+}
+
+
+.social-links a {
+  border: 1px solid #DDD;
+  border-radius: 50%;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0px 5px;
+  height: 40px;
+  width: 40px;
+}
+
+.form-section span {
+  font-size: 12px;
+}
+
+.input-field {
+  position: relative;
+  margin: 8px 0;
+  width: 100%;
+}
+
+.input-field input {
+  width: 100%;
+  padding: 12px 8px;
+  background-color: #f3f3f3;
+  border: none;
+  outline: none;
+}
+
+.lab {
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 2px;
+  background: var(--linear-grad);
+  transition: 0.3s;
+}
+
+input:focus~label {
+  width: 100%;
+}
+
+.form-section a {
+  color: #333;
+  font-size: 14px;
+  text-decoration: none;
+  margin: 15px 0;
+}
+
+.forgot-password {
+  padding-bottom: 3px;
+  border-bottom: 2px solid #eee;
+}
+
+.sign-container button {
+  border-radius: 20px;
+  border: 1px solid #fff;
+  background: var(--grad-clr2);
+  color: #FFF;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 12px 45px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.sign:hover {
+  border: 1px solid black;
+}
+
+.form-section button {
+  margin-top: 17px;
+}
+
+.form-section button {
+  margin-top: 17px;
+  transition: 80ms ease-in;
+}
+
+.form-section button:hover {
+  background: #fff;
+  color: var(--grad-clr1);
+}
+
+.overlay-wrapper {
+  position: absolute;
+  top: 0;
+  left: 60%;
+  width: 40%;
+  height: 100%;
+  overflow: hidden;
+  transition: transform 0.6s ease-in-out;
+  z-index: 9;
+}
+
+.toggle-button {
+  cursor: pointer;
+  position: absolute;
+  left: 50%;
+  top: 304px;
+  transform: translateX(-50%);
+  width: 145.67px;
+  height: 40px;
+  border: 1px solid #FFF;
+  background: transparent;
+  border-radius: 20px;
+}
+
+.overlay-background {
+  position: relative;
+  background: var(--linear-grad);
+  color: #fff;
+  left: -150%;
+  height: 100%;
+  width: 250%;
+  transition: transform 0.6s ease-in-out;
+}
+
+.overlay-panel {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 0 40px;
+  text-align: center;
+  height: 100%;
+  width: 340px;
+  transition: 0.6s ease-in-out;
+}
+
+.left-panel {
+  right: 60%;
+  transform: translateX(-12%);
+}
+
+.right-panel {
+  right: 0;
+  transform: translateX(0%);
+}
+
+.overlay-panel h1 {
+  color: #fff;
+}
+
+.overlay-wrapper p {
+  font-size: 14px;
+  font-weight: 300;
+  line-height: 20px;
+  letter-spacing: 0.5px;
+  margin: 25px 0 35px;
+}
+
+.close-icon {
+  position: absolute;
+  top: 15px;
+  /* Adjust as needed */
+  right: 15px;
+  /* Adjust as needed */
+  cursor: pointer;
+  color: #fff;
+  /* Change color as needed */
+  font-size: 24px;
+  /* Adjust size as needed */
+  transition: color 0.3s ease;
+}
+
+.close-icon:hover {
+  color: #ff0000;
+  /* Change color on hover if desired */
+}
+
+
+/* .overlay-panel button {
+  border: none;
+  background-color: transparent;
+  padding-top: 20px;
+} */
+
+.panel-active .overlay-wrapper {
+  transform: translateX(-150%);
+}
+
+.panel-active .overlay-background {
+  transform: translateX(50%);
+}
+
+.panel-active .left-panel {
+  transform: translateX(25%);
+}
+
+.panel-active .right-panel {
+  transform: translateX(35%);
+}
+
+.panel-active .signin-section {
+  transform: translateX(20%);
+  opacity: 0;
+}
+
+.panel-active .signup-section {
+  transform: translateX(66.7%);
+  opacity: 1;
+  z-index: 5;
+  animation: show 0.6s;
+}
+
+@keyframes show {
+
+  0%,
+  50% {
+      opacity: 0;
+      z-index: 1;
+  }
+
+  50.1%,
+  100% {
+      opacity: 1;
+      z-index: 1;
+  }
+}
+
+/* Styles for Forgot Password Popup */
+.forgot-password-form {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #ffffff;
+  padding: 2rem;
+  width: 400px;
+  box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  z-index: 1001;
+  text-align: center;
+}
+
+.forgot-password-form h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 1.5rem;
+}
+
+/* Input Field Styles */
+.forgot-password-form .input-field {
+  position: relative;
+  margin-bottom: 1.2rem;
+}
+
+.forgot-password-form .input-field input {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  font-size: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+.forgot-password-form .input-field input:focus {
+  border-color: #0056b3;
+}
+
+/* Eye Icon for Password Visibility Toggle */
+.forgot-password-form .eye-icon {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #666;
+}
+
+.forgot-password-form .eye-icon:hover {
+  color: #333;
+}
+
+/* Authentication Options */
+.auth-options {
+  display: flex;
+  justify-content: space-between;
+  margin: 1rem 0;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.auth-options label {
+  cursor: pointer;
+}
+
+.auth-options input {
+  margin-right: 0.4rem;
+}
+
+/* OTP Input Field */
+.forgot-password-form .input-field input[type="text"] {
+  letter-spacing: 2px;
+}
+
+/* Verify Button */
+.verify-btn {
+  width: 100%;
+  padding: 0.8rem;
+  background-color: #0056b3;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.verify-btn:hover {
+  background-color: #004099;
+}
+
+/* Dark overlay for Forgot Password */
+.forgot-password-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.7);
+  /* Adjust opacity as needed */
+  z-index: 1000;
+  /* Ensure it appears behind the form */
+}
+
+.forgot-password-form {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #ffffff;
+  padding: 2rem;
+  width: 400px;
+  box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  z-index: 1001;
+  text-align: center;
+}
+
+/* Close Icon for Forgot Password Form */
+.forgot-close-icon {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  cursor: pointer;
+  font-size: 24px;
+  color: #333;
+  transition: color 0.3s;
+}
+
+.forgot-close-icon:hover {
+  color: #ff0000;
+}
+
+/* Dark overlay for Forgot Password */
+.forgot-password-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.7);
+  /* Adjust opacity as needed */
+  z-index: 1000;
+  /* Ensure it appears behind the form */
+}
+
+/* For large devices */
+@media screen and (max-width: 992px) {
+  .sign-container {
+      width: 770px;
+      height: 450px;
+  }
+
+  .toggle-button {
+      margin-top: -20px;
+  }
+}
+
+
+/* For medium devices */
+@media screen and (max-width: 768px) {
+  .para {
+      font-size: 1.5vw;
+  }
+
+  .sign-container {
+      width: 675px;
+      height: 400px;
+  }
+
+  .right-panel h1 {
+
+      padding-left: 60px;
+  }
+
+  .right-panel p {
+      padding-left: 60px;
+  }
+
+  .right-panel button {
+      margin-left: 30px;
+      margin-top: -50px;
+  }
+
+  .left-panel h1 {
+
+      padding-left: 35px;
+  }
+
+  .left-panel p {
+      padding-left: 35px;
+  }
+
+  .left-panel button {
+      margin-left: 20px;
+      margin-top: -50px;
+  }
+
+  .signup-section button {
+      margin-top: 0;
+  }
+
+  .signup-section h1 {
+      font-size: 28px;
+  }
+
+  .signin-section button {
+      margin: 0;
+  }
+
+}
+
+
+@media screen and (max-width: 576px) {
+  .sub-heading {
+      font-size: 13px;
+  }
+
+  .para {
+      font-size: 9px;
+
+  }
+
+  .header-contents {
+      max-width: 75%;
+  }
+
+  .sign-container {
+      width: 500px;
+      height: 350px;
+  }
+
+  .overlay-panel {
+      padding: 0 10px;
+  }
+
+  .right-panel h1 {
+      font-size: 25px;
+      padding-left: 135px;
+  }
+
+
+  .right-panel p {
+      margin-top: 15px;
+      font-size: 12px;
+      padding-left: 135px;
+  }
+
+
+  .right-panel button {
+      margin-left: 70px;
+      margin-top: -85px;
+  }
+
+  .left-panel h1 {
+
+      font-size: 25px;
+      padding-left: 75px;
+  }
+
+  .left-panel p {
+      margin-top: 15px;
+      font-size: 13px;
+      padding-left: 110px;
+      padding-right: 40px;
+  }
+
+  .left-panel button {
+      margin-left: 35px;
+      margin-top: -75px;
+  }
+
+  .signup-section button {
+      margin-top: -20px;
+  }
+
+  .form-section h1 {
+      font-size: 24px;
+      margin-top: 15px;
+  }
+
+  .form-section form {
+      padding: 0;
+  }
+
+  .social-links {
+      margin-top: -8px;
+  }
+
+  .signin-section button {
+      margin-top: -20px;
+  }
+}
+
+
+/* For small devices */
+@media screen and (max-width: 350px) {
+  .sub-heading {
+      font-size: 13px;
+  }
+
+  .para {
+      font-size: 7px;
+  }
+
+  .signbtn {
+      font-size: 0.6em;
+  }
+}
+
+@media screen and (max-width: 320px) {
+  .para {
+      font-size: 9px;
+  }
+
+
+}

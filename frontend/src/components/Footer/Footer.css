@@ -1,0 +1,116 @@
+.footer {
+    color: #d9d9d9;
+    background-color: #323232;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 20px 8vw;
+    padding-top: 80px;
+}
+
+.footer-content {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 80px;
+}
+
+.footer-content-left, 
+.footer-content-center, 
+.footer-content-right {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    gap: 20px;
+}
+
+.footer-content-left li, 
+.footer-content-center li, 
+.footer-content-right li {
+    list-style: none;
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+
+.footer-content-right h2, 
+.footer-content-center h2 {
+    color: white;
+}
+
+.footer-socialmedia-icons img {
+    width: 40px;
+    margin-right: 15px;
+}
+
+.footer-socialmedia-icons a {
+    padding: 5px;
+}
+
+.footer hr {
+    width: 100%;
+    height: 2px;
+    margin: 20px 0;
+    background-color: grey;
+    border: none;
+}
+
+.footer-copyright {
+    text-align: center;
+}
+
+/* Responsiveness */
+
+/* Tablets and small laptops */
+@media (max-width: 992px) {
+    .footer-content {
+        display: flex;
+        flex-direction: column;
+        gap: 35px;
+        align-items: center;
+        text-align: center;
+    }
+    .footer-content-left, 
+    .footer-content-center, 
+    .footer-content-right {
+        align-items: center;
+    }
+}
+
+/* Large phones */
+@media (max-width: 768px) {
+    .footer {
+        padding: 20px 5vw;
+    }
+    .footer-socialmedia-icons img {
+        width: 35px;
+        margin-right: 10px;
+    }
+}
+
+/* Small phones */
+@media (max-width: 576px) {
+    .footer {
+        padding: 20px 4vw;
+        padding-top: 60px;
+    }
+    .footer-content {
+        gap: 25px;
+    }
+    .footer-socialmedia-icons img {
+        width: 30px;
+        margin-right: 8px;
+    }
+}
+
+/* Extra small devices */
+@media (max-width: 350px) {
+    .footer {
+        padding: 15px 3vw;
+        padding-top: 50px;
+    }
+    .footer-socialmedia-icons img {
+        width: 28px;
+        margin-right: 5px;
+    }
+}

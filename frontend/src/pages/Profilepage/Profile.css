@@ -1,0 +1,819 @@
+.profile-card {
+  display: flex;
+  align-items: center;
+  background-color: #f3f3f3;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 85%;
+  height: 180px;
+  /* Adjusted height */
+  margin: 20px auto;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  font-family: Arial, sans-serif;
+  position: relative;
+  /* Ensure relative positioning for absolute children */
+}
+
+.edit-profile {
+  position: absolute;
+  /* Position it at the top right */
+  top: 10px;
+  /* Adjust top position */
+  right: 10px;
+  /* Adjust right position */
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  /* Font size for the text */
+  color: #002366;
+  /* Color for the text */
+  cursor: pointer;
+  /* Pointer cursor for better UX */
+}
+
+.edit-profile span {
+  margin-left: 5px;
+  /* Space between the icon and text */
+}
+
+.profile-image-container {
+  position: relative;
+  width: 120px;
+  margin-right: 20px;
+}
+
+.profile-image {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #002366;
+}
+
+.image-input {
+  display: none;
+}
+
+.edit-icon {
+  position: absolute;
+  /* Ensure proper positioning */
+  top: 5px;
+  /* Adjust top position */
+  right: 5px;
+  /* Adjust right position */
+  background-color: #ffffff;
+  border-radius: 50%;
+  padding: 5px;
+  cursor: pointer;
+  font-size: 12px;
+  /* Decreased size of the edit icon */
+  color: #002366;
+  width: 25px;
+  /* Adjusted width */
+  height: 25px;
+  /* Adjusted height */
+  display: flex;
+  /* Center the icon */
+  align-items: center;
+  /* Center vertically */
+  justify-content: center;
+  /* Center horizontally */
+}
+
+.profile-details {
+  flex: 1;
+  text-align: left;
+  margin-bottom: 30px;
+}
+
+.profile-name {
+  font-size: 30px;
+  /* Increased font size */
+  color: #002366;
+  margin-top: 25px;
+  /* Space above the name */
+}
+
+.profile-email,
+.profile-phone {
+  color: #555;
+  font-size: 16px;
+}
+
+.profile-info {
+  display: flex;
+  /* Use flexbox for email and phone alignment */
+  align-items: center;
+  /* Center items vertically */
+  margin-top: 15px;
+  /* Space above the info */
+}
+
+.profile-email {
+  margin-right: 20px;
+  /* Space between email and phone */
+}
+
+.history-title {
+  text-align: center;
+  /* Center the title */
+  font-size: 24px;
+  /* Size of the history title */
+  color: #002366;
+  /* Color for the title */
+  margin: 20px auto;
+  /* Center the title */
+}
+
+.cards-container {
+  display: grid;
+  /* Use CSS Grid for layout */
+  grid-template-columns: repeat(2, 1fr);
+  /* Create two columns */
+  gap: 20px;
+  /* Space between cards */
+  max-width: 600px;
+  /* Limit the width of the cards */
+  margin: 0 auto;
+  /* Center the grid on the page */
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  /* Stack icon and text */
+  align-items: center;
+  /* Center items */
+  background-color: #ffffff;
+  /* Background color for cards */
+  border-radius: 8px;
+  /* Rounded corners */
+  padding: 30px;
+  /* Increased padding inside the card */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  /* Shadow effect */
+  min-height: 150px;
+  /* Increased minimum height */
+}
+
+.card-icon {
+  width: 50px;
+  margin-bottom: 10px;
+  /* Space below the icon */
+}
+
+.upload-count {
+  font-size: 14px;
+  /* Size for upload count */
+  color: #555;
+  /* Color for upload count */
+  margin-top: 5px;
+  /* Space above the upload count */
+}
+
+/* Styles for the Edit Profile Form */
+.edit-profile-form {
+  margin: 20px auto;
+  padding: 20px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  max-width: 600px;
+  /* Limit the width of the form */
+}
+
+.form-group {
+  display: flex;
+  justify-content: space-between;
+  /* Space between input fields */
+  margin-bottom: 15px;
+  /* Space between rows */
+}
+
+.form-group input {
+  flex: 1;
+  /* Allow inputs to grow */
+  margin-right: 10px;
+  /* Space between inputs */
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.form-group input:last-child {
+  margin-right: 0;
+  /* Remove margin from the last input */
+}
+
+.edit-profile-form button {
+  background-color: #002366;
+  /* Button color */
+  color: white;
+  /* Button text color */
+  padding: 10px 20px;
+  /* Padding inside button */
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 225px;
+}
+
+.edit-profile-form button:hover {
+  background-color: #0056b3;
+  /* Darker blue on hover */
+}
+
+/* Modal Overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  /* Semi-transparent background */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  /* Ensure overlay is above other elements */
+}
+
+/* Modal Content */
+.modal-content {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 600px;
+  /* Limit the width of the modal */
+  width: 100%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  animation: fadeIn 0.3s ease-in-out;
+  /* Fade-in effect */
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.modal-content h2 {
+  font-size: 24px;
+  color: #002366;
+  margin-bottom: 20px;
+  /* Space below the heading */
+  text-align: center;
+  /* Center the heading */
+}
+
+.clos-icon {
+  position: absolute;
+  cursor: pointer;
+  font-size: 20px;
+  color: #002366;
+}
+
+.clos-icon:hover {
+  color: #0056b3;
+}
+
+.edic {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.x-ic {
+  margin-left: 10px;
+  margin-top: 5px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: right;
+}
+
+/* Popup Overlay */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  /* Semi-transparent background */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  /* Bring overlay to the top */
+}
+
+/* Popup Content */
+.popup-content {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 600px;
+  width: 100%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  position: relative;
+}
+
+.popup-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  cursor: pointer;
+  font-size: 20px;
+  color: #002366;
+}
+
+.popup-title {
+  font-size: 24px;
+  color: #002366;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.popup-items {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  max-height: 300px;
+  /* Set a maximum height */
+  overflow-y: auto;
+  /* Enable scrolling when content overflows */
+  padding: 10px;
+  /* Optional: Add padding for spacing */
+  background-color: #f9f9f9;
+  /* Optional: Background color for visibility */
+  border: 1px solid #ddd;
+  /* Optional: Add a border for better visuals */
+  border-radius: 8px;
+  /* Optional: Rounded corners */
+}
+
+.popup-items::-webkit-scrollbar {
+  width: 8px;
+  /* Width of the scrollbar */
+}
+
+.popup-items::-webkit-scrollbar-thumb {
+  background: #002366;
+  /* Scrollbar color */
+  border-radius: 4px;
+  /* Rounded scrollbar edges */
+}
+
+.popup-items::-webkit-scrollbar-thumb:hover {
+  background: #001a50;
+  /* Darker scrollbar color on hover */
+}
+
+.popup-item {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.upload-thumbnail {
+  width: 50px;
+  height: 50px;
+  border-radius: 4px;
+  margin-right: 15px;
+}
+
+.upload-name {
+  flex: 1;
+  font-size: 16px;
+  color: #333;
+}
+
+.upload-timestamp {
+  font-size: 14px;
+  color: #666;
+  margin-right: 10px;
+}
+
+.delete-icon {
+  color: #d9534f;
+  cursor: pointer;
+}
+
+.delete-all-btn {
+  background-color: #d9534f;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 20px;
+  font-size: 16px;
+}
+
+.delete-all-btn:hover {
+  background-color: #c9302c;
+}
+
+@media (min-width: 1440px) {
+  .profile-card {
+    max-width: 1200px;
+    height: 200px;
+  }
+
+  .profile-name {
+    font-size: 32px;
+  }
+
+  .cards-container {
+    max-width: 1000px;
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Regular Desktops (1200px to 1439px) */
+@media (max-width: 1439px) {
+  .profile-card {
+    max-width: 90%;
+    height: 180px;
+  }
+
+  .cards-container {
+    max-width: 800px;
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Small Desktops and Large Tablets (992px to 1199px) */
+@media (max-width: 1199px) {
+  .profile-card {
+    max-width: 95%;
+    height: 170px;
+    padding: 15px;
+  }
+
+  .profile-name {
+    font-size: 26px;
+  }
+
+  .profile-image {
+    width: 100px;
+    height: 100px;
+  }
+
+  .cards-container {
+    max-width: 700px;
+    padding: 0 20px;
+  }
+
+  .modal-content,
+  .popup-content {
+    max-width: 500px;
+    margin: 0 20px;
+  }
+}
+
+/* Tablets (768px to 991px) */
+@media (max-width: 991px) {
+  .profile-card {
+    flex-direction: column;
+    height: auto;
+    text-align: center;
+    padding: 20px;
+  }
+
+  .profile-image-container {
+    margin: 0 auto 20px;
+  }
+
+  .profile-details {
+    margin-bottom: 0;
+  }
+
+  .profile-info {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .profile-email {
+    margin-right: 0;
+  }
+
+  .cards-container {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    padding: 0 15px;
+  }
+
+  .card {
+    padding: 20px;
+    min-height: 130px;
+  }
+
+  .form-group {
+    flex-direction: column;
+  }
+
+  .form-group input {
+    margin-right: 0;
+    margin-bottom: 10px;
+  }
+
+  .edit-profile-form button {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .popup-items {
+    max-height: 400px;
+  }
+}
+
+/* Large Phones (576px to 767px) */
+@media (max-width: 767px) {
+  .profile-card {
+    max-width: 100%;
+    margin: 10px;
+    padding: 15px;
+  }
+
+  .profile-name {
+    font-size: 24px;
+  }
+
+  .profile-image {
+    width: 90px;
+    height: 90px;
+  }
+
+  .cards-container {
+    grid-template-columns: 1fr;
+    max-width: 400px;
+  }
+
+  .card {
+    padding: 15px;
+    min-height: 120px;
+  }
+
+  .modal-content,
+  .popup-content {
+    max-width: 95%;
+    margin: 0 10px;
+    padding: 15px;
+  }
+
+  .popup-item {
+    flex-wrap: wrap;
+  }
+
+  .upload-timestamp {
+    width: 100%;
+    margin-top: 5px;
+    text-align: left;
+    margin-left: 65px;
+  }
+}
+
+/* Small Phones (575px and below) */
+@media (max-width: 575px) {
+  .profile-card {
+    padding: 10px;
+  }
+
+  .profile-name {
+    font-size: 20px;
+  }
+
+  .profile-email,
+  .profile-phone {
+    font-size: 14px;
+  }
+
+  .history-title {
+    font-size: 20px;
+    margin: 15px auto;
+  }
+
+  .card {
+    padding: 12px;
+    min-height: 110px;
+  }
+
+  .card-icon {
+    width: 40px;
+  }
+
+  .popup-items {
+    max-height: 350px;
+  }
+
+  .popup-item {
+    padding: 8px;
+  }
+
+  .upload-thumbnail {
+    width: 40px;
+    height: 40px;
+  }
+
+  .upload-name {
+    font-size: 14px;
+  }
+
+  .delete-all-btn {
+    font-size: 14px;
+    padding: 8px 16px;
+  }
+}
+
+/* Extra Small Phones (350px and below) */
+@media (max-width: 350px) {
+  .profile-card {
+    padding: 8px;
+  }
+
+  .profile-image {
+    width: 80px;
+    height: 80px;
+  }
+
+  .profile-name {
+    font-size: 18px;
+  }
+
+  .profile-email,
+  .profile-phone {
+    font-size: 12px;
+  }
+
+  .edit-icon {
+    width: 20px;
+    height: 20px;
+    font-size: 10px;
+  }
+
+  .card {
+    padding: 10px;
+    min-height: 100px;
+  }
+
+  .card-icon {
+    width: 35px;
+  }
+
+  .upload-count {
+    font-size: 12px;
+  }
+
+  .modal-content,
+  .popup-content {
+    padding: 10px;
+  }
+
+  .popup-title {
+    font-size: 18px;
+  }
+
+  .popup-items {
+    max-height: 300px;
+  }
+
+  .upload-name {
+    font-size: 12px;
+  }
+
+  .upload-timestamp {
+    font-size: 11px;
+  }
+
+  .delete-all-btn {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+}
+
+/* Additional Responsive Fixes */
+@media (max-height: 700px) {
+  .popup-items {
+    max-height: 250px;
+  }
+}
+
+/* Print Media Query */
+@media print {
+
+  .edit-profile,
+  .edit-icon,
+  .cards-container,
+  .modal-overlay,
+  .popup-overlay {
+    display: none;
+  }
+
+  .profile-card {
+    box-shadow: none;
+    border: 1px solid #ddd;
+  }
+}
+
+/* Modal Overlay - Highest z-index to ensure it's always on top */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999; /* Increased z-index to ensure it's above all other elements */
+}
+
+.modal-content {
+  background-color: #ffffff;
+  padding: 2rem;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 600px;
+  position: relative;
+  max-height: 90vh;
+  overflow-y: auto;
+  z-index: 10000; /* Even higher z-index for the content */
+}
+
+/* Close Icon */
+.clos-icon-p {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  cursor: pointer;
+  font-size: 1.5rem;
+  color: #666;
+  transition: color 0.3s ease;
+  z-index: 10001; /* Highest z-index for the close button */
+}
+
+.clos-icon:hover {
+  color: #ff4444;
+}
+
+/* Animation */
+.modal-overlay {
+  animation: fadeIn 0.3s ease;
+}
+
+.modal-content {
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.video-thumbnail-p {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.audio-thumbnail-p{
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.lang-thumbnail-p{
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

@@ -1,0 +1,388 @@
+.audio-area {
+  background-color: #c1f0ec;
+  height: 400px;
+  max-width: 800px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  /* Center content vertically */
+  justify-content: center;
+  /* Center content horizontally */
+  overflow: hidden;
+  /* Remove scrollbar */
+  position: relative;
+  transition: transform 0.5s ease;
+  /* Smooth transition for movement */
+}
+
+.audio-area.moved {
+  transform: translateX(200px);
+}
+
+/* Record button styling */
+.record-button {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #f44336;
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.record-button:hover {
+  transform: scale(1.1);
+  background: lightgreen;
+}
+
+/* Active recording state */
+.record-button.recording {
+  background: #4CAF50;
+  animation: pulse 1.5s infinite;
+}
+
+/* Pulsing animation for recording state */
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.4);
+  }
+
+  70% {
+    box-shadow: 0 0 0 10px rgba(244, 67, 54, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(244, 67, 54, 0);
+  }
+}
+
+
+
+
+@media (max-width: 1199px) {
+  .audio-area {
+    height: 350px;
+    max-width: 600px;
+  }
+
+  .audio-area.moved {
+    transform: translateX(180px);
+  }
+}
+
+@media (max-width: 991px) {
+
+  .audio-area {
+    height: 300px;
+    max-width: 470px;
+  }
+
+
+  .audio-area.moved {
+    transform: translateX(150px);
+  }
+}
+
+@media (max-width: 768px) {
+
+  .audio-area {
+    height: 250px;
+    max-width: 100%;
+  }
+
+
+  .audio-area.moved {
+    transform: translateY(45vh);
+    transition: transform 0.3s ease-in-out;
+  }
+
+  .record-button {
+    bottom: 10px;
+    right: 10px;
+    width: 40px;
+    height: 40px;
+  }
+
+}
+
+@media (max-width: 575px) {
+
+  .audio-area {
+    height: 200px;
+  }
+
+}
+
+@media (max-width: 350px) {
+
+  .audio-area {
+    height: 180px;
+  }
+
+}.audio-area {
+  background-color: #c1f0ec;
+  height: 400px;
+  max-width: 800px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  /* Center content vertically */
+  justify-content: center;
+  /* Center content horizontally */
+  overflow: hidden;
+  /* Remove scrollbar */
+  position: relative;
+  transition: transform 0.5s ease;
+  /* Smooth transition for movement */
+}
+
+.audio-area.moved {
+  transform: translateX(200px);
+}
+
+/* Record button styling */
+.record-button {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #f44336;
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.record-button:hover {
+  transform: scale(1.1);
+  background: lightgreen;
+}
+
+/* Active recording state */
+.record-button.recording {
+  background: #4CAF50;
+  animation: pulse 1.5s infinite;
+}
+
+/* Pulsing animation for recording state */
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.4);
+  }
+
+  70% {
+    box-shadow: 0 0 0 10px rgba(244, 67, 54, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(244, 67, 54, 0);
+  }
+}
+
+
+
+
+@media (max-width: 1199px) {
+  .audio-area {
+    height: 350px;
+    max-width: 600px;
+  }
+
+  .audio-area.moved {
+    transform: translateX(180px);
+  }
+}
+
+@media (max-width: 991px) {
+
+  .audio-area {
+    height: 300px;
+    max-width: 470px;
+  }
+
+
+  .audio-area.moved {
+    transform: translateX(150px);
+  }
+}
+
+@media (max-width: 768px) {
+
+  .audio-area {
+    height: 250px;
+    max-width: 100%;
+  }
+
+
+  .audio-area.moved {
+    transform: translateY(45vh);
+    transition: transform 0.3s ease-in-out;
+  }
+
+  .record-button {
+    bottom: 10px;
+    right: 10px;
+    width: 40px;
+    height: 40px;
+  }
+
+}
+
+@media (max-width: 575px) {
+
+  .audio-area {
+    height: 200px;
+  }
+
+}
+
+@media (max-width: 350px) {
+
+  .audio-area {
+    height: 180px;
+  }
+
+}.audio-area {
+background-color: #c1f0ec;
+height: 400px;
+max-width: 800px;
+width: 100%;
+display: flex;
+align-items: center;
+/* Center content vertically */
+justify-content: center;
+/* Center content horizontally */
+overflow: hidden;
+/* Remove scrollbar */
+position: relative;
+transition: transform 0.5s ease;
+/* Smooth transition for movement */
+}
+
+.audio-area.moved {
+transform: translateX(200px);
+}
+
+/* Record button styling */
+.record-button {
+position: absolute;
+bottom: 20px;
+right: 20px;
+width: 50px;
+height: 50px;
+border-radius: 50%;
+background: #f44336;
+border: none;
+color: white;
+cursor: pointer;
+display: flex;
+align-items: center;
+justify-content: center;
+transition: all 0.3s ease;
+box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.record-button:hover {
+transform: scale(1.1);
+background: lightgreen;
+}
+
+/* Active recording state */
+.record-button.recording {
+background: #4CAF50;
+animation: pulse 1.5s infinite;
+}
+
+/* Pulsing animation for recording state */
+@keyframes pulse {
+0% {
+  box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.4);
+}
+
+70% {
+  box-shadow: 0 0 0 10px rgba(244, 67, 54, 0);
+}
+
+100% {
+  box-shadow: 0 0 0 0 rgba(244, 67, 54, 0);
+}
+}
+
+
+
+
+@media (max-width: 1199px) {
+.audio-area {
+  height: 350px;
+  max-width: 600px;
+}
+
+.audio-area.moved {
+  transform: translateX(180px);
+}
+}
+
+@media (max-width: 991px) {
+
+.audio-area {
+  height: 300px;
+  max-width: 470px;
+}
+
+
+.audio-area.moved {
+  transform: translateX(150px);
+}
+}
+
+@media (max-width: 768px) {
+
+.audio-area {
+  height: 250px;
+  max-width: 100%;
+}
+
+
+.audio-area.moved {
+  transform: translateY(45vh);
+  transition: transform 0.3s ease-in-out;
+}
+
+.record-button {
+  bottom: 10px;
+  right: 10px;
+  width: 40px;
+  height: 40px;
+}
+
+}
+
+@media (max-width: 575px) {
+
+.audio-area {
+  height: 200px;
+}
+
+}
+
+@media (max-width: 350px) {
+
+.audio-area {
+  height: 180px;
+}
+
+}
