@@ -28,7 +28,7 @@ model.to(device)
 
 # Define your MongoDB connection and keywords (as in the original code)
 client = MongoClient("mongodb://localhost:27017/")
-db = client['ocr_database']
+db = client['NLP_SIGN']
 
 
    # Define the keyword lists for each category

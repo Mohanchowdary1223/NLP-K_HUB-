@@ -127,7 +127,7 @@ keywords = {
 }
 # Connect to MongoDB
 client = MongoClient("mongodb://localhost:27017/")
-db = client['ocr_database']  # Your database name
+db = client['NLP_SIGN']  # Your database name
 
 def extract_audio(video_path, audio_output_path):
     """Extracts audio from the video and saves it as a separate file."""

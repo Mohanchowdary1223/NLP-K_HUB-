@@ -13,7 +13,7 @@ import logoImage from '../../assets/assets/DDLogo.png';
 const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);  // Mobile menu state
   const [profileOpen, setProfileOpen] = useState(false);  // Profile dropdown state
-  const [userName, setUserName] = useState(''); // Add state for user name
+  const [userName, setUserName] = useState('');  // Add state for user name
   const [email, setEmail] = useState(''); // Add state for user email
 
   // Add useEffect to fetch user data
@@ -21,19 +21,17 @@ const Navbar = () => {
     const fetchUserData = async () => {
       try {
         const response = await axios.get('http://localhost:5000/profile', {
-          withCredentials: true
+          withCredentials: true,
         });
-        setUserName(response.data.name || 'User'); // Use 'User' as fallback
-        setEmail(response.data.email);
+        setUserName(response.data.name); // Set user name
+        setEmail(response.data.email);   // Set user email
       } catch (error) {
         console.error('Error fetching user data:', error);
-        setUserName('User');
       }
     };
-
+  
     fetchUserData();
   }, []);
-
   return (
     <nav>
       <div className="logo-container">

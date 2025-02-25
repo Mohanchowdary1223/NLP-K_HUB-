@@ -11,16 +11,31 @@ function LangTranslator() {
   const [targetLang, setTargetLang] = useState('te'); // Default to Telugu
 
   const handleTranslate = async () => {
+    if (!text.trim()) {
+      // Don't send empty text
+      return;
+    }
+
     try {
       const response = await axios.post('http://localhost:5000/translate', {
         text,
         sourceLang,
         targetLang
+      }, {
+        withCredentials: true,  // Add this to handle cookies/session
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
-      setTranslatedText(response.data.translated_text || 'Translation failed');
+      
+      if (response.data && response.data.translated_text) {
+        setTranslatedText(response.data.translated_text);
+      } else {
+        setTranslatedText('Translation failed');
+      }
     } catch (error) {
-      setTranslatedText('Error: Unable to translate');
-      console.error(error);
+      console.error('Translation error:', error);
+      setTranslatedText(error.response?.data?.error || 'Error: Unable to translate');
     }
   };
 

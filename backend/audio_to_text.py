@@ -104,7 +104,7 @@ keywords = {
 
 # Connect to MongoDB
 client = MongoClient("mongodb://localhost:27017/")
-db = client['ocr_database']  # Your database name
+db = client['NLP_SIGN']  # Your database name
 
 def convert_mp3_to_wav(mp3_path, wav_output_path):
     """Convert MP3 file to WAV format."""

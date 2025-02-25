@@ -71,14 +71,16 @@ def logout():
 
 @app.route('/upload', methods=['GET', 'POST'])
 @login_required
-def upload_file():
+def upload_file():  
     return render_template('upload.html')
+
 
 # Connect to MongoDB
 client = MongoClient("mongodb://localhost:27017/")
-db = client['ocr_database']  # Database name
+db = client['NLP_SIGN']  # Database name
 translations_collection = db['translations']  # Collection for storing translations
 original_texts_collection = db['original_texts']  # Collection for original untranslated text
+multimedia_collection = db['multimedia']  # Collection for storing multimedia files metadata
 
 # Text categorization function
 def categorize_text(text):
@@ -97,18 +99,21 @@ def save_original_text_to_mongodb(original_text, source_lang):
 
 # Save translation to MongoDB
 def save_translation_to_mongodb(original_text, source_lang, translated_text, target_lang, category, region):
-        # Use "anonymous" if the user is not authenticated
     email = current_user.email if current_user.is_authenticated else "anonymous"
 
     translations_collection.insert_one({
-        'email': email,
+        'email': current_user.email,
         'original_text': original_text,
         'source_lang': source_lang,
         'translated_text': translated_text,
         'target_lang': target_lang,
         'category': category,
-        'region': region
+        'region': region,
+        'timestamp': time.time()
     })
+
+    # Log the insertion
+    print(f"Inserted translation for email: {email}")
 
 
 # Serve files from user-specific folder
@@ -120,50 +125,75 @@ def serve_file(user, filename):
     user_folder = os.path.join(app.config['UPLOAD_FOLDER'], user)
     return send_from_directory(user_folder, filename)
 
+
+@app.route('/uploads/multimedia', methods=['GET'])
+@login_required
+def get_multimedia():
+    multimedia_files = list(multimedia_collection.find({'email': current_user.email}, {'_id': 0}))
+    return jsonify(multimedia_files)
+
+
+
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 # Translation route
-# Translation route
 @app.route('/translate', methods=['POST'])
-
+@login_required
 def translate_text():
-    data = request.json
-    text = data.get('text')
-    source_lang = data.get('sourceLang')
-    target_lang = data.get('targetLang')
-
-    if not text or not target_lang or not source_lang:
-        return jsonify({'error': 'Text, source language, and target language are required'}), 400
-
     try:
-        # Detect source language if not provided
-        detected_lang = source_lang if source_lang else translator.detect(text).lang
-        save_original_text_to_mongodb(text, detected_lang)
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
 
-        # Perform translation
-        translation = translator.translate(text, src=detected_lang, dest=target_lang).text
-        category = categorize_text(text)
-        region = language_to_region.get(target_lang, "Unknown Region")
+        text = data.get('text')
+        source_lang = data.get('sourceLang')
+        target_lang = data.get('targetLang')
 
-        # Save translation to MongoDB
-        save_translation_to_mongodb(text, detected_lang, translation, target_lang, category, region)
+        if not text or not target_lang or not source_lang:
+            return jsonify({'error': 'Text, source language, and target language are required'}), 400
 
-        return jsonify({
-            'original_text': text,
-            'detected_lang': detected_lang,
-            'translated_text': translation,
-            'target_lang': target_lang,
-            'category': category,
-            'region': region
-        })
+        # Initialize translator
+        translator = Translator()
+        
+        try:
+            # Perform translation
+            translation = translator.translate(text, src=source_lang, dest=target_lang)
+            
+            if not translation or not translation.text:
+                return jsonify({'error': 'Translation failed'}), 500
+
+            # Get the category and region
+            category = categorize_text(text)
+            region = language_to_region.get(target_lang, "Unknown Region")
+
+            # Save to MongoDB
+            save_translation_to_mongodb(
+                text, 
+                source_lang, 
+                translation.text, 
+                target_lang, 
+                category, 
+                region
+            )
+
+            return jsonify({
+                'translated_text': translation.text,
+                'source_lang': source_lang,
+                'target_lang': target_lang,
+                'category': category,
+                'region': region
+            })
+
+        except Exception as translation_error:
+            print(f"Translation error: {translation_error}")
+            return jsonify({'error': 'Translation service error'}), 500
 
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        print(f"Server error: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
 
- # Updated import to include the new Gemini function
 
-# Route for uploading and processing images
 @app.route('/upload-image', methods=['POST'])
 @login_required
 def upload_image():
@@ -173,6 +203,7 @@ def upload_image():
     file = request.files['image']
     if file.filename == '':
         return jsonify({"error": "No file selected"}), 400
+
     # Create a user-specific folder
     user_folder = os.path.join(app.config['UPLOAD_FOLDER'], current_user.email)
     if not os.path.exists(user_folder):
@@ -188,45 +219,32 @@ def upload_image():
 
     try:
         if model == "gemini":
-            # Process the image using Gemini OCR
             result = process_gemini_image(filepath)
         elif model == "simple":
-            # Process the image using Simple OCR
             result = process_image(filepath)
         else:
             result = extract_table_data(filepath)
-            print(result)
 
-        # Convert integer keys to strings if needed
-        extracted_text = result.get("extracted_text", {})
-        if isinstance(extracted_text, dict):
-            extracted_text = {str(k): v for k, v in extracted_text.items()}
-            result["extracted_text"] = extracted_text
-
-        # Now insert into MongoDB
-        db_result = userdata_collection.insert_one({
+        # Store image metadata in MongoDB
+        multimedia_collection.insert_one({
             'email': current_user.email,
+            'filepath': filepath,
+            'type': 'image',
             'extracted_text': result.get("extracted_text"),
             'classified_data': result.get("classified_data"),
             'saved_data': result.get("saved_data"),
-            'type': 'image'
+            'timestamp': time.time()
         })
 
-        # Return processed data
-        response = jsonify({
+        return jsonify({
             "extracted_text": result.get("extracted_text"),
             "classified_data": result.get("classified_data"),
-            "saved_data": result.get("saved_data"),
-            "id": str(db_result.inserted_id)
+            "saved_data": result.get("saved_data")
         })
-        response.headers.add("Access-Control-Allow-Origin", "http://localhost:5173")
-        response.headers.add("Access-Control-Allow-Credentials", "true")
-        return response
 
     except Exception as e:
         print("Error during image processing:", e)
         return jsonify({"error": "An error occurred during image processing"}), 500
-
 
 
 
@@ -236,12 +254,10 @@ def upload_image():
 def upload_audio():
     try:
         if 'audio' not in request.files:
-            print("No audio file in request")
             return jsonify({"error": "No audio file uploaded"}), 400
 
         file = request.files['audio']
         if file.filename == '':
-            print("Empty filename")
             return jsonify({"error": "No file selected"}), 400
 
         # Create a user-specific folder
@@ -249,57 +265,24 @@ def upload_audio():
         if not os.path.exists(user_folder):
             os.makedirs(user_folder)
 
-        # Generate unique filename to avoid conflicts
+        # Save audio file in the user folder
         filename = secure_filename(file.filename)
-        unique_filename = f"{int(time.time())}_{filename}"
-        filepath = os.path.join(user_folder, unique_filename)
-        print(f"Saving file to: {filepath}")
+        filepath = os.path.join(user_folder, filename)
         file.save(filepath)
 
-        # Convert to WAV if needed
-        wav_path = filepath
-        if filepath.lower().endswith('.mp3'):
-            wav_path = os.path.join(user_folder, f"{int(time.time())}_converted.wav")
-            print(f"Converting MP3 to WAV: {wav_path}")
-            try:
-                convert_mp3_to_wav(filepath, wav_path)
-                os.remove(filepath)  # Remove the original MP3 after conversion
-            except Exception as e:
-                print(f"Error converting MP3 to WAV: {str(e)}")
-                return jsonify({"error": "Error converting audio format"}), 500
-
         # Process the audio
-        print("Processing audio file...")
-        extracted_text = audio_to_text(wav_path)
-        
-        if not extracted_text:
-            print("No text extracted from audio")
-            return jsonify({"error": "Could not extract text from audio"}), 500
-
-        # Classify the extracted text
+        extracted_text = audio_to_text(filepath)
         classified_data = classify_text(extracted_text)
 
-        # Save to MongoDB
-        try:
-            result = userdata_collection.insert_one({
-                'email': current_user.email,
-                'extracted_text': extracted_text,
-                'classified_data': classified_data,
-                'type': 'audio',
-                'timestamp': time.time(),
-                'filename': unique_filename
-            })
-            print(f"Saved to MongoDB with ID: {result.inserted_id}")
-        except Exception as e:
-            print(f"MongoDB error: {str(e)}")
-            return jsonify({"error": "Database error"}), 500
-
-        # Clean up temporary files
-        try:
-            if wav_path != filepath:
-                os.remove(wav_path)
-        except Exception as e:
-            print(f"Error cleaning up files: {str(e)}")
+        # Store audio metadata in MongoDB
+        multimedia_collection.insert_one({
+            'email': current_user.email,
+            'filepath': filepath,
+            'type': 'audio',
+            'extracted_text': extracted_text,
+            'classified_data': classified_data,
+            'timestamp': time.time()
+        })
 
         return jsonify({
             "extracted_text": extracted_text,
@@ -309,6 +292,7 @@ def upload_audio():
     except Exception as e:
         print(f"Unexpected error in upload_audio: {str(e)}")
         return jsonify({"error": "An unexpected error occurred"}), 500
+
 
 @app.route('/api/<path:path>', methods=['OPTIONS'])
 def handle_options(path=None):
@@ -341,21 +325,27 @@ def convert_video():
         video_path = os.path.join(user_folder, filename)
         file.save(video_path)
 
-        # Run the main function and retrieve results
+        # Process the video
         result = main(video_path)
 
-        # Return the result as JSON
+        # Store video metadata in MongoDB
+        multimedia_collection.insert_one({
+            'email': current_user.email,
+            'filepath': video_path,
+            'type': 'video',
+            'extracted_text': result.get("extracted_text"),
+            'classification': result.get("classification"),
+            'timestamp': time.time()
+        })
+
         return jsonify({
-            "extracted_text": result.get("extracted_text", "No text extracted"),
-            "classification": result.get("classification", {}),
-            "message": "Conversion successful"
-        }), 200
+            "extracted_text": result.get("extracted_text"),
+            "classification": result.get("classification")
+        })
 
     except Exception as e:
         print("Error in /convert-video:", e)
         return jsonify({"error": "An internal error occurred during conversion"}), 500
-
-
 
 @app.route('/profile/upload-image', methods=['POST'])
 @login_required
@@ -420,7 +410,6 @@ def update_profile():
 @app.route('/profile', methods=['GET'])
 @login_required
 def get_profile():
-    # Fetch user data from MongoDB
     user = users_collection.find_one({"email": current_user.email})
     if not user:
         return jsonify({"error": "User not found"}), 404
@@ -429,9 +418,8 @@ def get_profile():
     image_count = userdata_collection.count_documents({'email': current_user.email, 'type': 'image'})
     audio_count = userdata_collection.count_documents({'email': current_user.email, 'type': 'audio'})
     video_count = userdata_collection.count_documents({'email': current_user.email, 'type': 'video'})
-    translation_count = translations_collection.count_documents({'email': current_user.email})
+    translation_count = translations_collection.count_documents({'email': current_user.email})  # Correct collection
 
-    # Return profile data with counts and profile image
     return jsonify({
         "email": user.get("email"),
         "name": user.get("name"),
@@ -440,29 +428,23 @@ def get_profile():
         "phone": user.get("phone"),
         "city": user.get("city"),
         "state": user.get("state"),
-        "profile_image": user.get("profile_image"),  # Only the filename is stored in MongoDB
+        "profile_image": user.get("profile_image"),
         "image_count": image_count,
         "audio_count": audio_count,
         "video_count": video_count,
-        "translation_count": translation_count
+        "translation_count": translation_count  # Correct count
     }), 200
 
-
+    
 @app.route('/profile-stats', methods=['GET'])
 @login_required
 def get_profile_stats():
-    
-
     try:
         user_folder = os.path.join(app.config['UPLOAD_FOLDER'], current_user.email)
-        # Define file types for images, audio, and videos
         image_extensions = {".jpg", ".jpeg", ".png", ".gif"}
         audio_extensions = {".mp3", ".wav"}
         video_extensions = {".mp4", ".avi", ".mov"}
 
-       
-        
-        # Initialize counts
         image_count = 0
         audio_count = 0
         video_count = 0
@@ -477,24 +459,19 @@ def get_profile_stats():
                 elif file_extension in video_extensions:
                     video_count += 1
 
-        # Get the translation count from MongoDB
+        # Count translations from translations_collection
         translation_count = translations_collection.count_documents({'email': current_user.email})
 
-        # Return the counts
-        response = jsonify({
+        return jsonify({
             "image_count": image_count,
             "audio_count": audio_count,
             "video_count": video_count,
             "translation_count": translation_count
         })
-        response.headers.add("Access-Control-Allow-Origin", "http://localhost:5173")
-        response.headers.add("Access-Control-Allow-Credentials", "true")
-        return response
 
     except Exception as e:
         print(f"Error fetching profile stats: {e}")
         return jsonify({"error": "Failed to fetch profile statistics"}), 500
-
 
 @app.route('/uploads/images', methods=['GET'])
 @login_required
@@ -544,7 +521,6 @@ def get_audios():
 def get_translations():
     translations = list(translations_collection.find({}, {"_id": 0, "original_text": 1, "translated_text": 1}))
     return jsonify(translations)
-
 #@app.route('/uploads/<filename>', methods=['GET'])
 #def serve_file(filename):
  #   return send_from_directory(UPLOAD_FOLDER, filename)
@@ -624,6 +600,61 @@ def record_audio_endpoint():
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+
+
+@app.route('/admin-users', methods=['GET'])
+def admin_users_data():
+    users = users_collection.find()  # Fetch all users
+
+    user_list = []
+    for user in users:
+        email = user.get('email', '')
+
+        # Fetch media files for the user
+        user_folder = os.path.join(app.config['UPLOAD_FOLDER'], email)
+        if os.path.exists(user_folder):
+            image_files = [
+                f"http://localhost:5000/uploads/{email}/{f}"
+                for f in os.listdir(user_folder)
+                if f.lower().endswith(('png', 'jpg', 'jpeg', 'gif'))
+            ]
+            audio_files = [
+                f"http://localhost:5000/uploads/{email}/{f}"
+                for f in os.listdir(user_folder)
+                if f.lower().endswith(('mp3', 'wav', 'aac'))
+            ]
+            video_files = [
+                f"http://localhost:5000/uploads/{email}/{f}"
+                for f in os.listdir(user_folder)
+                if f.lower().endswith(('mp4', 'avi', 'mov', 'mkv'))
+            ]
+        else:
+            image_files = []
+            audio_files = []
+            video_files = []
+
+        # Fetch translations for the user
+        translations = list(translations_collection.find({'email': email}, {'_id': 0}))
+
+        user_data = {
+            '_id': str(user['_id']),
+            'name': user.get('name', 'Unknown'),
+            'email': email,
+            'image_count': len(image_files),
+            'audio_count': len(audio_files),
+            'video_count': len(video_files),
+            'translation_count': len(translations),  # Count translations
+            'images': image_files,
+            'audios': audio_files,
+            'videos': video_files,
+            'translations': translations  # Include translations in the response
+        }
+
+        user_list.append(user_data)
+
+    return jsonify(user_list), 200
 
 if __name__ == '__main__':
     if users_collection is not None and userdata_collection is not None:
