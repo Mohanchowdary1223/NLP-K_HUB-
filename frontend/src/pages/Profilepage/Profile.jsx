@@ -35,6 +35,18 @@ function ProfileCard() {
     
     const [translations, setTranslations] = useState([]);
     const [showTranslationsPopup, setShowTranslationsPopup] = useState(false);
+    const [mediaFiles, setMediaFiles] = useState({
+        images: [],
+        videos: [],
+        audios: []
+    });
+    
+    const [mediaData, setMediaData] = useState({
+        images: [],
+        videos: [],
+        audios: []
+    });
+
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -62,6 +74,18 @@ function ProfileCard() {
                     audioUploads: audio_count,
                     langTranslator: translation_count,
                 });
+
+                // Add media files fetch
+                const mediaRes = await axios.get('http://localhost:5000/media/files', {
+                    withCredentials: true
+                });
+                setMediaFiles(mediaRes.data);
+
+                // Fetch media files from MongoDB
+                const mediaResponse = await axios.get('http://localhost:5000/user/media', {
+                    withCredentials: true
+                });
+                setMediaData(mediaResponse.data);
             } catch (error) {
                 console.error('Error fetching data:', error);
             }
@@ -124,6 +148,11 @@ function ProfileCard() {
 
     const navigateToMediaPage = (mediaType) => {
         navigate(`/media/${mediaType}`);
+    };
+
+    // Add new function to handle media view
+    const handleMediaView = (mediaType) => {
+        setActiveCard(mediaType);
     };
 
     return (
@@ -219,23 +248,22 @@ function ProfileCard() {
 
             <h3 className="history-title">History</h3>
             <div className="cards-container">
-                <div className="card" onClick={() => navigateToMediaPage("images")}>
+                <div className="card" onClick={() => handleMediaView("images")}>
                     <img src={ImgtoTxt} alt="" className="card-icon" />
                     <p>Image Uploads</p>
                     <span className="upload-count">{uploadCounts.imageUploads} uploads</span>
                 </div>
-                <div className="card" onClick={() => navigateToMediaPage("videos")}>
+                <div className="card" onClick={() => handleMediaView("videos")}>
                     <img src={VidtoTxt} alt="" className="card-icon" />
                     <p>Video Uploads</p>
                     <span className="upload-count">{uploadCounts.videoUploads} uploads</span>
                 </div>
-                <div className="card" onClick={() => navigateToMediaPage("audios")}>
+                <div className="card" onClick={() => handleMediaView("audios")}>
                     <img src={AudtoTxt} alt="" className="card-icon" />
                     <p>Audio Uploads</p>
                     <span className="upload-count">{uploadCounts.audioUploads} uploads</span>
                 </div>
-                 
-                 <div
+                <div
                     className="card"
                     onClick={() => {
                         setActiveCard("langTranslator");
@@ -259,6 +287,105 @@ function ProfileCard() {
                
             </div>
             
+            {/* Media Popups */}
+            {activeCard === "images" && (
+                <div className="popup-overlay">
+                    <div className="popup-content">
+                        <span className="popup-close" onClick={() => setActiveCard(null)}>
+                            <FaTimes />
+                        </span>
+                        <h2 className="popup-title">Image History</h2>
+                        <div className="media-list">
+                            {mediaData.images.length > 0 ? (
+                                mediaData.images.map((image) => (
+                                    <div key={image.file_id} className="media-item">
+                                        <img
+                                            src={`http://localhost:5000/media/file/${image.file_id}`}
+                                            alt={image.filename}
+                                            className="media-thumbnail"
+                                            onError={(e) => {
+                                                console.error("Error loading image:", e);
+                                                e.target.src = "fallback-image-url";
+                                            }}
+                                        />
+                                        <p>Extracted Text: {image.extracted_text}</p>
+                                        <p className="timestamp">
+                                            {new Date(image.timestamp).toLocaleString()}
+                                        </p>
+                                    </div>
+                                ))
+                            ) : (
+                                <p>No image history found.</p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {activeCard === "videos" && (
+                <div className="popup-overlay">
+                    <div className="popup-content">
+                        <span className="popup-close" onClick={() => setActiveCard(null)}>
+                            <FaTimes />
+                        </span>
+                        <h2 className="popup-title">Video History</h2>
+                        <div className="media-list">
+                            {mediaData.videos.length > 0 ? (
+                                mediaData.videos.map((video) => (
+                                    <div key={video.file_id} className="media-item">
+                                        <video controls className="media-thumbnail">
+                                            <source 
+                                                src={`http://localhost:5000/media/file/${video.file_id}`}
+                                                type={video.content_type || "video/mp4"}
+                                            />
+                                            Your browser does not support the video tag.
+                                        </video>
+                                        <p>Extracted Text: {video.extracted_text}</p>
+                                        <p className="timestamp">
+                                            {new Date(video.timestamp).toLocaleString()}
+                                        </p>
+                                    </div>
+                                ))
+                            ) : (
+                                <p>No video history found.</p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {activeCard === "audios" && (
+                <div className="popup-overlay">
+                    <div className="popup-content">
+                        <span className="popup-close" onClick={() => setActiveCard(null)}>
+                            <FaTimes />
+                        </span>
+                        <h2 className="popup-title">Audio History</h2>
+                        <div className="media-list">
+                            {mediaData.audios.length > 0 ? (
+                                mediaData.audios.map((audio) => (
+                                    <div key={audio.file_id} className="media-item">
+                                        <audio controls className="media-player">
+                                            <source 
+                                                src={`http://localhost:5000/media/file/${audio.file_id}`}
+                                                type={audio.content_type || "audio/mpeg"}
+                                            />
+                                            Your browser does not support the audio tag.
+                                        </audio>
+                                        <p>Extracted Text: {audio.extracted_text}</p>
+                                        <p className="timestamp">
+                                            {new Date(audio.timestamp).toLocaleString()}
+                                        </p>
+                                    </div>
+                                ))
+                            ) : (
+                                <p>No audio history found.</p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {activeCard === "langTranslator" && (
                 <div className="popup-overlay">
                     <div className="popup-content">

@@ -16,6 +16,8 @@ from flask import jsonify
 from Liveasr import record_audio, transcribe_audio, translate_text
 import uuid
 import time
+from bson.objectid import ObjectId
+from gridfs import GridFS
 
 
 app = Flask(__name__)
@@ -81,6 +83,9 @@ db = client['NLP_SIGN']  # Database name
 translations_collection = db['translations']  # Collection for storing translations
 original_texts_collection = db['original_texts']  # Collection for original untranslated text
 multimedia_collection = db['multimedia']  # Collection for storing multimedia files metadata
+
+# Initialize GridFS
+fs = GridFS(db)
 
 # Text categorization function
 def categorize_text(text):
@@ -218,18 +223,28 @@ def upload_image():
     model = request.form.get('model')
 
     try:
-        if model == "gemini":
-            result = process_gemini_image(filepath)
-        elif model == "simple":
-            result = process_image(filepath)
-        else:
-            result = extract_table_data(filepath)
+        # Store file in GridFS
+        file_id = fs.put(
+            file.read(),
+            filename=secure_filename(file.filename),
+            content_type=file.content_type
+        )
 
-        # Store image metadata in MongoDB
+        # Process image
+        if model == "gemini":
+            result = process_gemini_image(file)
+        elif model == "simple":
+            result = process_image(file)
+        else:
+            result = extract_table_data(file)
+
+        # Store metadata in MongoDB
         multimedia_collection.insert_one({
             'email': current_user.email,
-            'filepath': filepath,
+            'file_id': str(file_id),
+            'filename': secure_filename(file.filename),
             'type': 'image',
+            'content_type': file.content_type,
             'extracted_text': result.get("extracted_text"),
             'classified_data': result.get("classified_data"),
             'saved_data': result.get("saved_data"),
@@ -292,7 +307,7 @@ def upload_audio():
     except Exception as e:
         print(f"Unexpected error in upload_audio: {str(e)}")
         return jsonify({"error": "An unexpected error occurred"}), 500
-
+5
 
 @app.route('/api/<path:path>', methods=['OPTIONS'])
 def handle_options(path=None):
@@ -655,6 +670,102 @@ def admin_users_data():
         user_list.append(user_data)
 
     return jsonify(user_list), 200
+
+@app.route('/media/files', methods=['GET'])
+@login_required
+def get_media_files():
+    try:
+        # Get all media files for the current user
+        images = list(multimedia_collection.find(
+            {'email': current_user.email, 'type': 'image'},
+            {'_id': 0, 'file_id': 1, 'filename': 1, 'extracted_text': 1}
+        ))
+        videos = list(multimedia_collection.find(
+            {'email': current_user.email, 'type': 'video'},
+            {'_id': 0, 'file_id': 1, 'filename': 1, 'extracted_text': 1}
+        ))
+        audios = list(multimedia_collection.find(
+            {'email': current_user.email, 'type': 'audio'},
+            {'_id': 0, 'file_id': 1, 'filename': 1, 'extracted_text': 1}
+        ))
+
+        # Convert ObjectId to string for each document
+        for doc in images + videos + audios:
+            if isinstance(doc.get('file_id'), ObjectId):
+                doc['file_id'] = str(doc['file_id'])
+
+        return jsonify({
+            'images': images,
+            'videos': videos,
+            'audios': audios
+        })
+    except Exception as e:
+        print(f"Error fetching media files: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/media/file/<file_id>', methods=['GET'])
+@login_required
+def get_media_file(file_id):
+    try:
+        # Get file from GridFS
+        if isinstance(file_id, str):
+            file_id = ObjectId(file_id)
+        
+        file = fs.get(file_id)
+        if not file:
+            return jsonify({'error': 'File not found'}), 404
+
+        # Verify user has access to this file
+        media_info = multimedia_collection.find_one({
+            'file_id': str(file_id),
+            'email': current_user.email
+        })
+        
+        if not media_info:
+            return jsonify({'error': 'Unauthorized'}), 403
+
+        # Create response with file data
+        response = make_response(file.read())
+        response.mimetype = file.content_type
+        return response
+
+    except Exception as e:
+        print(f"Error retrieving file: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/user/media', methods=['GET'])
+@login_required
+def get_user_media():
+    try:
+        # Get all media files with their metadata for the current user
+        media = list(multimedia_collection.find(
+            {'email': current_user.email},
+            {
+                '_id': 0, 
+                'file_id': 1, 
+                'type': 1, 
+                'filename': 1, 
+                'extracted_text': 1,
+                'timestamp': 1
+            }
+        ))
+
+        # Convert ObjectId to string for file_ids
+        for item in media:
+            if isinstance(item.get('file_id'), ObjectId):
+                item['file_id'] = str(item['file_id'])
+
+        # Group media by type
+        response = {
+            'images': [m for m in media if m['type'] == 'image'],
+            'videos': [m for m in media if m['type'] == 'video'],
+            'audios': [m for m in media if m['type'] == 'audio']
+        }
+
+        return jsonify(response)
+    except Exception as e:
+        print(f"Error fetching user media: {e}")
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     if users_collection is not None and userdata_collection is not None:
