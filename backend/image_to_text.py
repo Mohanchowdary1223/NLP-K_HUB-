@@ -77,30 +77,40 @@ def process_image(image_path):
 
 # OCR and Classification Function
 def process_image(image_path):
-    reader = easyocr.Reader(['en'])
-    result = reader.readtext(image_path)
-    extracted_text = " ".join([text[1] for text in result])
+    try:
+        reader = easyocr.Reader(['en'])
+        result = reader.readtext(image_path)
+        extracted_text = " ".join([text[1] for text in result])
 
-    if not extracted_text.strip():
-        return {"error": "No text was extracted from the image."}
+        if not extracted_text.strip():
+            return {"error": "No text was extracted from the image."}
 
-    classified_data = classify_text(extracted_text)
+        classified_data = classify_text(extracted_text)
+        
+        return {
+            "extracted_text": extracted_text, 
+            "classified_data": classified_data
+        }
+    except Exception as e:
+        print(f"Error in process_image: {str(e)}")
+        return {"error": str(e)}
 
-    # Save to MongoDB
-    saved_data = {}
-    for category, words in classified_data.items():
-        if words:
-            collection = db[category]
-            doc = {
-                "extracted_text": extracted_text,
-                "keywords": words,
-                "timestamp": datetime.now(),
-                "image_path": image_path
-            }
-            result = collection.insert_one(doc)
-            saved_data[category] = str(result.inserted_id)
-    
-    return {"extracted_text": extracted_text, "classified_data": classified_data, "saved_data": saved_data}
+def process_gemini_image(image_path):
+    try:
+        extracted_text = extract_text_from_image([image_path])
+
+        if not extracted_text.strip():
+            return {"error": "No text was extracted from the image."}
+
+        classified_data = classify_text(extracted_text)
+        
+        return {
+            "extracted_text": extracted_text,
+            "classified_data": classified_data
+        }
+    except Exception as e:
+        print(f"Error in process_gemini_image: {str(e)}")
+        return {"error": str(e)}
 
 # Configure Gemini API key
 genai.configure(api_key="AIzaSyA8AcTys00u4NWs2OEpshLq13xuP6SYqUA")

@@ -202,41 +202,43 @@ def translate_text():
 @app.route('/upload-image', methods=['POST'])
 @login_required
 def upload_image():
-    if 'image' not in request.files:
-        return jsonify({"error": "No image file uploaded"}), 400
-
-    file = request.files['image']
-    if file.filename == '':
-        return jsonify({"error": "No file selected"}), 400
-
-    # Create a user-specific folder
-    user_folder = os.path.join(app.config['UPLOAD_FOLDER'], current_user.email)
-    if not os.path.exists(user_folder):
-        os.makedirs(user_folder)
-
-    # Save image file in the user folder
-    filename = secure_filename(file.filename)
-    filepath = os.path.join(user_folder, filename)
-    file.save(filepath)
-
-    # Get selected model
-    model = request.form.get('model')
-
     try:
-        # Store file in GridFS
+        if 'image' not in request.files:
+            return jsonify({"error": "No image file uploaded"}), 400
+
+        file = request.files['image']
+        if file.filename == '':
+            return jsonify({"error": "No file selected"}), 400
+
+        # Read file content once
+        file_content = file.read()
+        
+        # Store in GridFS
         file_id = fs.put(
-            file.read(),
+            file_content,
             filename=secure_filename(file.filename),
             content_type=file.content_type
         )
 
-        # Process image
+        # Create a temporary file for processing
+        import tempfile
+        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+            temp_file.write(file_content)
+            temp_path = temp_file.name
+
+        # Get selected model
+        model = request.form.get('model', 'simple')  # Default to simple if not specified
+
+        # Process image based on model
         if model == "gemini":
-            result = process_gemini_image(file)
+            result = process_gemini_image(temp_path)
         elif model == "simple":
-            result = process_image(file)
+            result = process_image(temp_path)
         else:
-            result = extract_table_data(file)
+            result = extract_table_data(temp_path)
+
+        # Clean up temporary file
+        os.unlink(temp_path)
 
         # Store metadata in MongoDB
         multimedia_collection.insert_one({
@@ -245,21 +247,23 @@ def upload_image():
             'filename': secure_filename(file.filename),
             'type': 'image',
             'content_type': file.content_type,
-            'extracted_text': result.get("extracted_text"),
-            'classified_data': result.get("classified_data"),
-            'saved_data': result.get("saved_data"),
+            'extracted_text': result.get("extracted_text", ""),
+            'classified_data': result.get("classified_data", {}),
+            'saved_data': result.get("saved_data", {}),
             'timestamp': time.time()
         })
 
         return jsonify({
-            "extracted_text": result.get("extracted_text"),
-            "classified_data": result.get("classified_data"),
-            "saved_data": result.get("saved_data")
+            "status": "success",
+            "file_id": str(file_id),
+            "extracted_text": result.get("extracted_text", ""),
+            "classified_data": result.get("classified_data", {}),
+            "saved_data": result.get("saved_data", {})
         })
 
     except Exception as e:
-        print("Error during image processing:", e)
-        return jsonify({"error": "An error occurred during image processing"}), 500
+        print("Error during image processing:", str(e))
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
 
 
 
