@@ -11,7 +11,6 @@ import Aboutpage from './pages/Aboutpage/Aboutpage';
 import Documentation from './pages/Documentation/Documentation';
 import ContactPage from './pages/Contactpage/Contact';
 import Profilepage from './pages/Profilepage/Profile';
-import MediaPage from './pages/MediaPage/MediaPage';
 import Userdata from './pages/Adminpage/UserData/UserData';
 import Userreport from './pages/Adminpage/UserReport/UserReport';
 
@@ -31,7 +30,6 @@ function App() {
       <Route path='/documentation' element={<Documentation />} />
       <Route path='/contact' element={<ContactPage />} />
       <Route path='/profile' element={<Profilepage/>} />
-      <Route path="/media/:type" element={<MediaPage />} />
     </Routes>
 
 

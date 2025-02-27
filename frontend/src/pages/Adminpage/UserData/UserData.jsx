@@ -314,22 +314,24 @@ const UserData = () => {
                   activeTab === "images" ? "active" : ""
                 }`}
               >
-                <div className="media-grid">
-                  {selectedUser.images.map((image, index) => (
-                    <div
-                      key={index}
-                      className="media-item"
-                      onClick={() =>
-                        handleMediaClick(
-                          { url: image, title: `Image ${index + 1}` },
-                          "image"
-                        )
-                      }
-                    >
-                      <img src={image} alt={`User Image ${index + 1}`} />
-                      <div className="media-item-info">Image {index + 1}</div>
-                    </div>
-                  ))}
+                <div className="media-list">
+                  {selectedUser.images && selectedUser.images.length > 0 ? (
+                    selectedUser.images.map((image, index) => (
+                      <div key={index} className="media-item">
+                        <img
+                          src={`http://localhost:5000/media/file/${image.file_id}`}
+                          alt={image.filename}
+                          className="media-thumbnail"
+                        />
+                        <p>Extracted Text: {image.extracted_text}</p>
+                        <p className="timestamp">
+                          {new Date(image.timestamp).toLocaleString()}
+                        </p>
+                      </div>
+                    ))
+                  ) : (
+                    <p>No image uploads found.</p>
+                  )}
                 </div>
               </div>
 
@@ -339,22 +341,26 @@ const UserData = () => {
                   activeTab === "videos" ? "active" : ""
                 }`}
               >
-                <div className="media-grid">
-                  {selectedUser.videos.map((video, index) => (
-                    <div
-                      key={index}
-                      className="media-item"
-                      onClick={() =>
-                        handleMediaClick(
-                          { url: video, title: `Video ${index + 1}` },
-                          "video"
-                        )
-                      }
-                    >
-                      <div className="video-thumbnail"></div>
-                      <div className="media-item-info">Video {index + 1}</div>
-                    </div>
-                  ))}
+                <div className="media-list">
+                  {selectedUser.videos && selectedUser.videos.length > 0 ? (
+                    selectedUser.videos.map((video, index) => (
+                      <div key={index} className="media-item">
+                        <video controls className="media-thumbnail">
+                          <source
+                            src={`http://localhost:5000/media/file/${video.file_id}`}
+                            type={video.content_type || "video/mp4"}
+                          />
+                          Your browser does not support the video tag.
+                        </video>
+                        <p>Extracted Text: {video.extracted_text}</p>
+                        <p className="timestamp">
+                          {new Date(video.timestamp).toLocaleString()}
+                        </p>
+                      </div>
+                    ))
+                  ) : (
+                    <p>No video uploads found.</p>
+                  )}
                 </div>
               </div>
 
@@ -364,24 +370,26 @@ const UserData = () => {
                   activeTab === "audio" ? "active" : ""
                 }`}
               >
-                <div className="media-grid">
-                  {selectedUser.audios.map((audio, index) => (
-                    <div
-                      key={index}
-                      className="media-item"
-                      onClick={() =>
-                        handleMediaClick(
-                          { url: audio, title: `Audio ${index + 1}` },
-                          "audio"
-                        )
-                      }
-                    >
-                      <div className="audio-thumbnail">
-                        <FaMusic />
+                <div className="media-list">
+                  {selectedUser.audios && selectedUser.audios.length > 0 ? (
+                    selectedUser.audios.map((audio, index) => (
+                      <div key={index} className="media-item">
+                        <audio controls className="media-player">
+                          <source
+                            src={`http://localhost:5000/media/file/${audio.file_id}`}
+                            type={audio.content_type || "audio/mpeg"}
+                          />
+                          Your browser does not support the audio tag.
+                        </audio>
+                        <p>Extracted Text: {audio.extracted_text}</p>
+                        <p className="timestamp">
+                          {new Date(audio.timestamp).toLocaleString()}
+                        </p>
                       </div>
-                      <div className="media-item-info">Audio {index + 1}</div>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <p>No audio uploads found.</p>
+                  )}
                 </div>
               </div>
 
@@ -391,12 +399,22 @@ const UserData = () => {
                   activeTab === "translations" ? "active" : ""
                 }`}
               >
-                {userDetails.translations.map((translation, index) => (
-                  <div key={index} className="translation-item">
-                    <span>{translation.language}:</span>
-                    <span>{translation.text}</span>
-                  </div>
-                ))}
+                <div className="media-list">
+                  {selectedUser.translations &&
+                  selectedUser.translations.length > 0 ? (
+                    selectedUser.translations.map((translation, index) => (
+                      <div key={index} className="media-item">
+                        <p>Original Text: {translation.original_text}</p>
+                        <p>Translated Text: {translation.translated_text}</p>
+                        <p className="timestamp">
+                          {new Date(translation.timestamp).toLocaleString()}
+                        </p>
+                      </div>
+                    ))
+                  ) : (
+                    <p>No translations found.</p>
+                  )}
+                </div>
               </div>
 
               {/* History Section */}

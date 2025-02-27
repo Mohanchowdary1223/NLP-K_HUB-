@@ -40,17 +40,22 @@ function ImageToText() {
                 mode: 'cors'
             });
 
-            if (response.ok) {
-                const result = await response.json();
-                console.log('Backend response:', result); // Debugging log
-                setConvertedText(result.extracted_text); // Update with backend response
-                setIsVisible(true);
-            } else {
-                alert('Failed to convert image to text. Please try again.');
+            const result = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(result.error || 'Failed to convert image');
             }
+
+            if (result.error) {
+                throw new Error(result.error);
+            }
+
+            setConvertedText(result.extracted_text || '');
+            setIsVisible(true);
+            
         } catch (error) {
-            console.error('Error during image conversion:', error);
-            alert('Error converting image. Please try again later.');
+            console.error('Error:', error);
+            alert(error.message || 'Error converting image. Please try again.');
         } finally {
             setLoading(false);
         }
