@@ -77,8 +77,8 @@ def process_image(image_path):
 
 # OCR and Classification Function
 def process_image(image_path):
+    """Extracts text using EasyOCR."""
     try:
-        reader = easyocr.Reader(['en'])
         result = reader.readtext(image_path)
         extracted_text = " ".join([text[1] for text in result])
 
@@ -86,14 +86,13 @@ def process_image(image_path):
             return {"error": "No text was extracted from the image."}
 
         classified_data = classify_text(extracted_text)
-        
-        return {
-            "extracted_text": extracted_text, 
-            "classified_data": classified_data
-        }
+
+        return {"extracted_text": extracted_text, "classified_data": classified_data}
+
     except Exception as e:
         print(f"Error in process_image: {str(e)}")
         return {"error": str(e)}
+
 
 def process_gemini_image(image_path):
     try:
@@ -184,8 +183,9 @@ def process_gemini_image(image_path):
 
 
 
-
 def extract_table_data(file_path):
+    """Extracts table data and fixes numeric keys issue."""
+    
     # Load object detection model
     model = AutoModelForObjectDetection.from_pretrained("microsoft/table-transformer-detection", revision="no_timm")
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -266,7 +266,7 @@ def extract_table_data(file_path):
     tables_crops = objects_to_crops(image, objects, detection_class_thresholds, padding=0)
 
     if not tables_crops:
-        return []
+        return {"error": "No table detected in the image."}
 
     cropped_table = tables_crops[0]['image'].convert("RGB")
 
@@ -330,8 +330,10 @@ def extract_table_data(file_path):
 
         return data
 
-    table_data=apply_ocr(cell_coordinates)
-    # Convert integer keys to strings
+    table_data = apply_ocr(cell_coordinates)
+
+    # 🔹 Fix: Convert numeric keys to string
     table_data_str = {str(k): v for k, v in table_data.items()}
 
-    return {"extracted_text": table_data}
+    return {"extracted_text": table_data_str}
+

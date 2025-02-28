@@ -108,27 +108,38 @@ db = client['NLP_SIGN']  # Your database name
 
 def convert_mp3_to_wav(mp3_path, wav_output_path):
     """Convert MP3 file to WAV format."""
-    audio = AudioSegment.from_mp3(mp3_path)
-    audio.export(wav_output_path, format="wav")
-    print(f"Converted {mp3_path} to {wav_output_path}")
+    try:
+        audio = AudioSegment.from_mp3(mp3_path)
+        audio.export(wav_output_path, format="wav")
+        print(f"Converted {mp3_path} to {wav_output_path}")
+    except Exception as e:
+        print(f"Error converting MP3 to WAV: {str(e)}")
+        raise
+
 
 def audio_to_text(audio_path):
     """Convert audio file to text using Google Speech Recognition."""
     recognizer = sr.Recognizer()
-    with sr.AudioFile(audio_path) as source:
-        audio_data = recognizer.record(source)
-        try:
-            text = recognizer.recognize_google(audio_data)
-            return text
-        except sr.UnknownValueError:
-            print("Speech Recognition could not understand audio.")
-            return None
-        except sr.RequestError as e:
-            print(f"Could not request results from Speech Recognition service: {e}")
-            return None
+    try:
+        with sr.AudioFile(audio_path) as source:
+            audio_data = recognizer.record(source)
+            return recognizer.recognize_google(audio_data)
+    except sr.UnknownValueError:
+        print("Google Speech Recognition could not understand the audio.")
+        return None
+    except sr.RequestError as e:
+        print(f"Error from Google Speech API: {str(e)}")
+        return None
+    except Exception as e:
+        print(f"Unexpected error in audio processing: {str(e)}")
+        return None
 
 def classify_text(extracted_text):
     """Classify extracted text into predefined categories."""
+    keywords = {
+        "Food": ["lunch", "dinner", "snack"],
+        "Education": ["study", "exam", "course"]
+    }
     classified_data = {}
     for category, words in keywords.items():
         if any(word in extracted_text.lower() for word in words):
