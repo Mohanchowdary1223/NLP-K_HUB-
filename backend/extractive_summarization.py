@@ -100,7 +100,7 @@ def process_exam_pdf(pdf_path):
         
         # Returning the summary and key points in a structured format
         output = {
-            "summary": summary,
+            "summary": summary, 
             "keypoints": keypoints_line_by_line
         }
         
