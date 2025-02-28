@@ -6,19 +6,19 @@ function AudioToText() {
     const [audio, setAudio] = useState(null);
     const [convertedText, setConvertedText] = useState('');
     const [classifiedData, setClassifiedData] = useState({});
-    const [translatedText, setTranslatedText] = useState('');
     const [isVisible, setIsVisible] = useState(false);
     const [loading, setLoading] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
-    const [targetLanguage, setTargetLanguage] = useState('en'); // Default language: English
+    const mediaRecorderRef = useRef(null);
+    const audioChunksRef = useRef([]);
     const fileInputRef = useRef(null);
 
+    // 🔹 Handle Audio File Upload
     const handleAudioUpload = (e) => {
         const file = e.target.files[0];
-        setAudio(file); // Store as file object for backend
+        setAudio(file); 
         setConvertedText('');
         setClassifiedData({});
-        setTranslatedText('');
         setIsVisible(false);
     };
 
@@ -26,6 +26,7 @@ function AudioToText() {
         fileInputRef.current.click();
     };
 
+    // 🔹 Send Uploaded Audio File to Backend (with improved error handling)
     const handleAudioConvert = async () => {
         if (!audio) {
             alert('Please upload an audio file first!');
@@ -43,14 +44,20 @@ function AudioToText() {
                 body: formData,
             });
 
+            // ✅ Fix: Check if response is HTML (not JSON)
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error("Server returned an invalid response. Please check backend logs.");
+            }
+
             const data = await response.json();
 
             if (!response.ok) {
                 throw new Error(data.error || 'Error converting audio to text');
             }
 
-            setConvertedText(data.extracted_text);
-            setClassifiedData(data.classified_data);
+            setConvertedText(data.extracted_text || '');
+            setClassifiedData(data.classified_data || {});
             setIsVisible(true);
         } catch (error) {
             console.error('Error:', error);
@@ -60,47 +67,82 @@ function AudioToText() {
         }
     };
 
-    const handleLiveRecording = async () => {
-        setIsRecording(true);
-        setLoading(true);
-
+    // 🔹 Start Live Recording
+    const startRecording = async () => {
         try {
-            const response = await fetch('http://localhost:5000/record-audio', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ target_language: targetLanguage }),
-            });
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const mediaRecorder = new MediaRecorder(stream);
+            mediaRecorderRef.current = mediaRecorder;
+            audioChunksRef.current = [];
 
-            if (response.ok) {
-                const data = await response.json();
-                setConvertedText(data.extracted_text); // Show transcription
-                setIsVisible(true); // Make sidebar visible
-            } else {
-                const errorData = await response.json();
-                alert(`Error: ${errorData.error}`);
-            }
+            mediaRecorder.ondataavailable = (event) => {
+                audioChunksRef.current.push(event.data);
+            };
+
+            mediaRecorder.start();
+            setIsRecording(true);
         } catch (error) {
-            console.error('Error:', error);
-            alert('Error processing live audio.');
-        } finally {
-            setIsRecording(false);
-            setLoading(false);
+            console.error('Microphone access denied:', error);
+            alert('Please allow microphone access to record.');
         }
     };
 
+    // 🔹 Stop Recording and Send to Backend
+    const stopRecording = async () => {
+        setIsRecording(false);
+        setLoading(true);
 
+        const mediaRecorder = mediaRecorderRef.current;
+        if (!mediaRecorder) return;
+
+        mediaRecorder.stop();
+        mediaRecorder.onstop = async () => {
+            const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'recorded_audio.wav');
+
+            try {
+                const response = await fetch('http://localhost:5000/upload-audio', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                // ✅ Fix: Check if response is HTML (not JSON)
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error("Server returned an invalid response. Please check backend logs.");
+                }
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Error converting audio to text');
+                }
+
+                setConvertedText(data.extracted_text || '');
+                setClassifiedData(data.classified_data || {});
+                setIsVisible(true);
+            } catch (error) {
+                console.error('Error:', error);
+                alert(error.message || 'Error processing the recorded audio.');
+            } finally {
+                setLoading(false);
+            }
+        };
+    };
+
+    // 🔹 Clear Audio Data
     const handleClear = () => {
         setAudio(null);
         setConvertedText('');
         setClassifiedData({});
-        setTranslatedText('');
         setIsVisible(false);
     };
 
+    // 🔹 Delete Extracted Text
     const handleDelete = () => {
         setConvertedText('');
         setClassifiedData({});
-        setTranslatedText('');
         setIsVisible(false);
     };
 
@@ -117,18 +159,20 @@ function AudioToText() {
                     {convertedText ? (
                         <div className="converted-text">
                             <p>{convertedText}</p>
-                            <div>
-                                <h4>Classified Data:</h4>
-                                <ul>
-                                    {Object.entries(classifiedData).map(([category, text]) => (
-                                        <li key={category}>
-                                            <strong>{category}:</strong> {text}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                            <button
-                                className="copy-btn"
+                            {Object.keys(classifiedData).length > 0 && (
+                                <div>
+                                    <h4>Classified Data:</h4>
+                                    <ul>
+                                        {Object.entries(classifiedData).map(([category, text]) => (
+                                            <li key={category}>
+                                                <strong>{category}:</strong> {text}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                            <button 
+                                className="copy-btn" 
                                 onClick={() => navigator.clipboard.writeText(convertedText)}
                             >
                                 Copy
@@ -159,9 +203,15 @@ function AudioToText() {
                     <button onClick={handleAudioConvert} className="convert-btn">
                         Convert
                     </button>
-                    <button onClick={handleLiveRecording} className="live-record-btn" disabled={isRecording}>
-                        {isRecording ? 'Recording...' : 'Record Live Audio'}
-                    </button>
+                    {!isRecording ? (
+                        <button onClick={startRecording} className="live-record-btn">
+                            Record Live Audio
+                        </button>
+                    ) : (
+                        <button onClick={stopRecording} className="stop-btn">
+                            Stop Recording
+                        </button>
+                    )}
                     <button onClick={handleDelete} className="delete-btn">
                         Delete
                     </button>
@@ -172,7 +222,6 @@ function AudioToText() {
             </div>
         </div>
     );
-
 }
 
 export default AudioToText;

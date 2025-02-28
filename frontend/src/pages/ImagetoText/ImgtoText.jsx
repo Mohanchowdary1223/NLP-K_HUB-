@@ -4,16 +4,16 @@ import Navbar from '../../components/Navbar/Navbar'; // Make sure this path is c
 
 function ImageToText() {
     const [image, setImage] = useState(null);
-    const [convertedText, setConvertedText] = useState('');
+    const [convertedText, setConvertedText] = useState([]); // Updated to store extracted text as an array
     const [isVisible, setIsVisible] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [model, setModel] = useState('simple'); // New state for model selection
+    const [model, setModel] = useState('simple'); // Model selection state
     const fileInputRef = useRef(null);
 
     const handleImageUpload = (e) => {
         const file = e.target.files[0];
-        setImage(file); // Keep file as a blob for backend upload
-        setConvertedText('');
+        setImage(file);
+        setConvertedText([]);
         setIsVisible(false);
     };
 
@@ -30,7 +30,7 @@ function ImageToText() {
         setLoading(true);
         const formData = new FormData();
         formData.append('image', image);
-        formData.append('model', model); // Append selected model to form data
+        formData.append('model', model);
 
         try {
             const response = await fetch('http://localhost:5000/upload-image', {
@@ -50,7 +50,8 @@ function ImageToText() {
                 throw new Error(result.error);
             }
 
-            setConvertedText(result.extracted_text || '');
+            // 🔹 Fix: Convert extracted text object into an array for rendering
+            setConvertedText(Object.entries(result.extracted_text || {}));
             setIsVisible(true);
             
         } catch (error) {
@@ -63,12 +64,12 @@ function ImageToText() {
 
     const handleClear = () => {
         setImage(null);
-        setConvertedText('');
+        setConvertedText([]);
         setIsVisible(false);
     };
 
     const handleDelete = () => {
-        setConvertedText('');
+        setConvertedText([]);
     };
 
     return (
@@ -93,16 +94,23 @@ function ImageToText() {
                     <h3>Here is the converted text</h3>
                     <button 
                          className="copy-btn"
-                         onClick={() => navigator.clipboard.writeText(convertedText)}
+                         onClick={() => navigator.clipboard.writeText(convertedText.map(row => row[1].join(" ")).join("\n"))}
                      >
                          Copy
                      </button>
-                    {convertedText ? (
-                         
-                        <div className="converted-text">
-                            <p>{convertedText}</p>
-                           
-                        </div>
+
+                    {convertedText.length > 0 ? (
+                        <table>
+                            <tbody>
+                                {convertedText.map(([rowIndex, rowData]) => (
+                                    <tr key={rowIndex}>
+                                        {rowData.map((cell, cellIndex) => (
+                                            <td key={cellIndex}>{cell}</td>
+                                        ))}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     ) : (
                         <p>No text converted yet.</p>
                     )}

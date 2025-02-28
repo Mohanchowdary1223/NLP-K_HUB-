@@ -1,32 +1,38 @@
-import React, { useRef, useState } from 'react';
-import './Documentation.css'; // Assuming you're using this for CSS
-import Navbar from '../../components/Navbar/Navbar'; // Make sure this path is correct
+import React, { useRef, useState, useEffect } from 'react';
+import './Documentation.css';
+import Navbar from '../../components/Navbar/Navbar';
 
-function VideoToText() {
-  const [media, setMedia] = useState(null);
-  const [mediaType, setMediaType] = useState(''); // Track the type of media (video or document)
+function Documentation() {
+  const [pdf, setPdf] = useState(null);
   const [convertedText, setConvertedText] = useState('');
   const [isVisible, setIsVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [summaries, setSummaries] = useState([]); // ✅ State for fetched summaries
   const fileInputRef = useRef(null);
 
-  const handleMediaUpload = (e) => {
+  useEffect(() => {
+    // ✅ Fetch stored summaries from backend
+    const fetchSummaries = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/get-summaries");
+        const data = await response.json();
+        setSummaries(data);
+      } catch (error) {
+        console.error("Error fetching summaries:", error);
+      }
+    };
+
+    fetchSummaries();
+  }, []);
+
+  const handlePdfUpload = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      const fileType = file.type;
+    if (file && file.type === 'application/pdf') {
+      setPdf(file);
       setConvertedText('');
       setIsVisible(false);
-
-      if (fileType.startsWith('video/')) {
-        setMediaType('video');
-        setMedia(URL.createObjectURL(file));
-      } else if (fileType === 'application/pdf') {
-        setMediaType('document');
-        setMedia(URL.createObjectURL(file));
-      } else {
-        alert('Unsupported file type! Please upload a video or a PDF document.');
-        setMedia(null);
-        setMediaType('');
-      }
+    } else {
+      alert('Please upload a valid PDF file.');
     }
   };
 
@@ -34,38 +40,59 @@ function VideoToText() {
     fileInputRef.current.click();
   };
 
-  const handleConvert = () => {
-    if (media) {
-      setConvertedText('This is a simulated result of the converted text from the uploaded media.');
+  const handleConvert = async () => {
+    if (!pdf) {
+      alert("Please upload a PDF file first!");
+      return;
+    }
+
+    setLoading(true);
+    const formData = new FormData();
+    formData.append("pdf", pdf);
+
+    try {
+      const response = await fetch("http://localhost:5000/upload-pdf", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Unknown error occurred.");
+      }
+
+      const data = await response.json();
+      setConvertedText(`Summary: ${data.summary}\n\nKey Points:\n- ${data.keypoints.replace(/\n/g, "\n- ")}`);
       setIsVisible(true);
-    } else {
-      alert('Please upload a file first!');
+    } catch (error) {
+      console.error("Error:", error);
+      alert(`Failed to process the file: ${error.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleClear = () => {
-    setMedia(null);
-    setMediaType('');
+    setPdf(null);
     setConvertedText('');
     setIsVisible(false);
-  };
-
-  const handleDelete = () => {
-    setConvertedText('');
   };
 
   return (
     <div>
       <Navbar />
       <div className={`main-container ${isVisible ? 'moved' : ''}`}>
-        <h1>Summarize Your File</h1>
+        <h1>Summarize Your PDF</h1>
+
+        {/* Loading Indicator ✅ */}
+        {loading && <p style={{ color: 'black' }}>Processing PDF, please wait...</p>}
 
         {/* Converted Text Section */}
         <div className={`converted-text-section ${isVisible ? 'visible' : ''}`}>
-          <h3>KEY NOTES.</h3>
+          <h3>Summary & Key Points</h3>
           {convertedText ? (
             <div className="converted-text">
-              <p>{convertedText}</p>
+              <pre>{convertedText}</pre>
               <button className="copy-btn">Copy</button>
             </div>
           ) : (
@@ -73,37 +100,38 @@ function VideoToText() {
           )}
         </div>
 
-        {/* Media Upload Section */}
-        <div className={`video-area ${isVisible ? 'moved' : ''}`} onClick={handlePlaceholderClick}>
-          {media ? (
-            mediaType === 'video' ? (
-              <video src={media} controls className="uploaded-media" />
-            ) : (
-              <iframe
-                src={media}
-                title="Uploaded Document"
-                className="uploaded-media"
-                frameBorder="0"
-              />
-            )
+        {/* Previously Stored Summaries ✅ */}
+        <div className="stored-summaries">
+          <h3>Previously Summarized PDFs</h3>
+          {summaries.length > 0 ? (
+            <ul>
+              {summaries.map((summary, index) => (
+                <li key={index}>
+                  <strong>{summary.filename}</strong>
+                  <p>{summary.summary}</p>
+                </li>
+              ))}
+            </ul>
           ) : (
-            <div className="placehold">
-              <span>+ Add File (Video or PDF)</span>
-            </div>
+            <p>No summaries available yet.</p>
           )}
+        </div>
+
+        {/* PDF Upload Section */}
+        <div className={`pdf-area ${isVisible ? 'moved' : ''}`} onClick={handlePlaceholderClick}>
+          {pdf ? <p>{pdf.name}</p> : <div className="placeholder"><span>+ Add PDF</span></div>}
         </div>
         <input
           type="file"
-          accept="video/*,application/pdf" // Allow videos and PDFs
+          accept="application/pdf"
           ref={fileInputRef}
-          onChange={handleMediaUpload}
+          onChange={handlePdfUpload}
           style={{ display: 'none' }}
         />
 
         {/* Buttons */}
         <div className={`buttons ${isVisible ? 'moved' : ''}`}>
           <button onClick={handleConvert} className="convert-btn">Convert</button>
-          <button onClick={handleDelete} className="delete-btn">Delete</button>
           <button onClick={handleClear} className="clear-btn">Clear</button>
         </div>
       </div>
@@ -111,4 +139,4 @@ function VideoToText() {
   );
 }
 
-export default VideoToText;
+export default Documentation;

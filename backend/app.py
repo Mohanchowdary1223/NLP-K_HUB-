@@ -18,6 +18,7 @@ import uuid
 import time
 from bson.objectid import ObjectId
 from gridfs import GridFS
+from extractive_summarization import process_exam_pdf
 
 
 app = Flask(__name__)
@@ -47,12 +48,25 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 category_database = {category: {} for category in keywords.keys()}
 
+# ✅ MongoDB Setup
+client = MongoClient("mongodb://localhost:27017/")
+db = client['NLP_SIGN']
+multimedia_collection = db["multimedia"]  # ✅ Use existing multimedia collection
+
+
+# ✅ Fix: Ensure user loading function is correct
 @login_manager.user_loader
 def load_user(email):
     user = users_collection.find_one({"email": email})
     if user:
         return User(email=user['email'])
     return None
+
+# ✅ Handle unauthorized access
+@app.errorhandler(401)
+def unauthorized(error):
+    return jsonify({"error": "Unauthorized, please log in"}), 401
+
 
 @app.route('/')
 def home():
@@ -210,68 +224,57 @@ def upload_image():
         if file.filename == '':
             return jsonify({"error": "No file selected"}), 400
 
-        # Read file content once
-        file_content = file.read()
-        
-        # Store in GridFS
-        file_id = fs.put(
-            file_content,
-            filename=secure_filename(file.filename),
-            content_type=file.content_type
-        )
+        # Save image file
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
 
-        # Create a temporary file for processing
-        import tempfile
-        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
-            temp_file.write(file_content)
-            temp_path = temp_file.name
+        # Select processing model
+        model = request.form.get('model', 'simple')
 
-        # Get selected model
-        model = request.form.get('model', 'simple')  # Default to simple if not specified
-
-        # Process image based on model
         if model == "gemini":
-            result = process_gemini_image(temp_path)
+            result = process_gemini_image(filepath)
         elif model == "simple":
-            result = process_image(temp_path)
+            result = process_image(filepath)
+        elif model == "tableocr":
+            result = extract_table_data(filepath)
         else:
-            result = extract_table_data(temp_path)
+            return jsonify({"error": "Invalid model type"}), 400
 
-        # Clean up temporary file
-        os.unlink(temp_path)
+        # Fix numeric key issue before saving to MongoDB
+        extracted_text_fixed = {
+            str(k): v for k, v in result.get("extracted_text", {}).items()
+        }
 
         # Store metadata in MongoDB
+        file_id = fs.put(open(filepath, "rb"), filename=filename, content_type=file.content_type)
         multimedia_collection.insert_one({
-            'email': current_user.email,
             'file_id': str(file_id),
-            'filename': secure_filename(file.filename),
+            'filename': filename,
             'type': 'image',
             'content_type': file.content_type,
-            'extracted_text': result.get("extracted_text", ""),
-            'classified_data': result.get("classified_data", {}),
-            'saved_data': result.get("saved_data", {}),
-            'timestamp': time.time()
+            'extracted_text': extracted_text_fixed,
+            'classified_data': result.get("classified_data"),
+            'saved_data': result.get("saved_data"),
         })
 
         return jsonify({
-            "status": "success",
-            "file_id": str(file_id),
-            "extracted_text": result.get("extracted_text", ""),
-            "classified_data": result.get("classified_data", {}),
-            "saved_data": result.get("saved_data", {})
+            "extracted_text": extracted_text_fixed,
+            "classified_data": result.get("classified_data"),
+            "saved_data": result.get("saved_data")
         })
 
     except Exception as e:
         print("Error during image processing:", str(e))
-        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+        print(traceback.format_exc())  # Debugging output
+        return jsonify({"error": "An error occurred during image processing"}), 500
 
 
-
-# Route for uploading and processing audio
 @app.route('/upload-audio', methods=['POST'])
 @login_required
 def upload_audio():
     try:
+        # Check if file is in request
         if 'audio' not in request.files:
             return jsonify({"error": "No audio file uploaded"}), 400
 
@@ -279,21 +282,31 @@ def upload_audio():
         if file.filename == '':
             return jsonify({"error": "No file selected"}), 400
 
-        # Create a user-specific folder
+        # Create a user-specific folder based on email
         user_folder = os.path.join(app.config['UPLOAD_FOLDER'], current_user.email)
-        if not os.path.exists(user_folder):
-            os.makedirs(user_folder)
+        os.makedirs(user_folder, exist_ok=True)
 
-        # Save audio file in the user folder
+        # Secure and save file
         filename = secure_filename(file.filename)
         filepath = os.path.join(user_folder, filename)
         file.save(filepath)
 
-        # Process the audio
-        extracted_text = audio_to_text(filepath)
+        # Convert MP3 to WAV if needed
+        if filename.endswith(".mp3"):
+            wav_filepath = os.path.splitext(filepath)[0] + ".wav"
+            convert_mp3_to_wav(filepath, wav_filepath)
+        else:
+            wav_filepath = filepath
+
+        # Convert audio to text
+        extracted_text = audio_to_text(wav_filepath)
+        if not extracted_text:
+            return jsonify({"error": "Could not extract text from audio"}), 500
+
+        # Classify extracted text
         classified_data = classify_text(extracted_text)
 
-        # Store audio metadata in MongoDB
+        # Save audio metadata in MongoDB
         multimedia_collection.insert_one({
             'email': current_user.email,
             'filepath': filepath,
@@ -309,9 +322,9 @@ def upload_audio():
         })
 
     except Exception as e:
-        print(f"Unexpected error in upload_audio: {str(e)}")
-        return jsonify({"error": "An unexpected error occurred"}), 500
-5
+        print(f"Error in /upload-audio: {str(e)}")
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
 
 @app.route('/api/<path:path>', methods=['OPTIONS'])
 def handle_options(path=None):
@@ -796,3 +809,66 @@ if __name__ == '__main__':
         app.run(debug=True)
     else:
         print("MongoDB collections are not properly initialized. Exiting.")
+
+
+# ✅ Ensure the collection is properly initialized
+if "summarization_results" not in db.list_collection_names():
+    db.create_collection("summarization_results")
+summarization_collection = db["summarization_results"]
+
+# ✅ Route to Upload and Process a PDF File
+@app.route('/upload-pdf', methods=['POST'])
+def upload_pdf():
+    try:
+        if 'pdf' not in request.files:
+            return jsonify({"error": "No PDF file uploaded"}), 400
+
+        file = request.files['pdf']
+        if file.filename == '':
+            return jsonify({"error": "No file selected"}), 400
+
+        # ✅ Secure file name and save
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+
+        # ✅ Process PDF for summarization
+        result = process_exam_pdf(filepath)
+
+        if "error" in result:
+            return jsonify({"error": result["error"]}), 500
+
+        # ✅ Store summarization result in multimedia collection
+        summary_entry = {
+            "filename": filename,
+            "type": "text",  # ✅ This differentiates it from audio/video/image
+            "category": "summarization",  # ✅ Makes it easier to filter later
+            "summary": result["summary"],
+            "keypoints": result["keypoints"],
+            "timestamp": time.time()
+        }
+        multimedia_collection.insert_one(summary_entry)  # ✅ Store in multimedia collection
+
+        return jsonify({
+            "summary": result["summary"],
+            "keypoints": result["keypoints"]
+        }), 200
+
+    except Exception as e:
+        print("Error processing PDF:", str(e))
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
+# ✅ Route to Fetch All Extractive Summarization Results from Multimedia Collection
+@app.route('/get-text-summaries', methods=['GET'])
+def get_text_summaries():
+    try:
+        summaries = multimedia_collection.find(
+            {"type": "text", "category": "summarization"}, {"_id": 0}
+        )  # ✅ Filter only summarization results
+        return jsonify(list(summaries)), 200
+    except Exception as e:
+        print("Error fetching summaries:", str(e))
+        return jsonify({"error": "Failed to fetch summaries"}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True)
