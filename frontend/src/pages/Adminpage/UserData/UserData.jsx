@@ -34,9 +34,21 @@ const UserData = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch("http://localhost:5000/admin-users");
+        const response = await fetch("http://localhost:5000/admin-users", {
+          credentials: 'include' // Add this to include cookies if needed
+        });
+        if (!response.ok) throw new Error('Failed to fetch users');
         const data = await response.json();
-        setUsers(data); // Set fetched data to state
+        
+        // Modify user data to include profile image URL
+        const usersWithProfileImages = data.map(user => ({
+          ...user,
+          profile: user.profile_image 
+            ? `http://localhost:5000/uploads/${user.email}/${user.profile_image}`
+            : user
+        }));
+        
+        setUsers(usersWithProfileImages);
       } catch (error) {
         console.error("Error fetching users:", error);
       }
@@ -86,8 +98,9 @@ const UserData = () => {
 
   const handleUserClick = (user) => {
     if (!user.isEditing) {
-      setSelectedUser(user);
-      setActiveTab("images");
+        console.log('Full user data:', user); // Debug log
+        setSelectedUser(user); // Use the entire user object directly
+        setActiveTab("images");
     }
   };
 
@@ -184,6 +197,10 @@ const UserData = () => {
                           src={user.profile || user}
                           alt="Profile"
                           className="profile-img"
+                          onError={(e) => {
+                            e.target.src = user; // Fallback to default image
+                            console.error("Error loading profile image");
+                          }}
                         />
                       </label>
                     </>
@@ -192,6 +209,10 @@ const UserData = () => {
                       src={user.profile || user}
                       alt="Profile"
                       className="profile-img"
+                      onError={(e) => {
+                        e.target.src = user; // Fallback to default image
+                        console.error("Error loading profile image");
+                      }}
                     />
                   )}
                 </div>
@@ -220,13 +241,13 @@ const UserData = () => {
                 {user.isEditing ? (
                   <input
                     type="text"
-                    value={user.password || "********"}
+                    value={user.password || "*****"}
                     onChange={(e) =>
                       handleChange(user._id, "password", e.target.value)
                     }
                   />
                 ) : (
-                  <p>{user.password || "********"}</p>
+                  <p>*****</p> // Changed from displaying actual password to fixed 5 asterisks
                 )}
 
                 <div className="actions" onClick={(e) => e.stopPropagation()}>
@@ -309,26 +330,35 @@ const UserData = () => {
               </div>
 
               {/* Images Section */}
-              <div
-                className={`popup-content-section ${
-                  activeTab === "images" ? "active" : ""
-                }`}
-              >
+              <div className={`popup-content-section ${activeTab === "images" ? "active" : ""}`}>
                 <div className="media-list">
                   {selectedUser.images && selectedUser.images.length > 0 ? (
-                    selectedUser.images.map((image, index) => (
-                      <div key={index} className="media-item">
-                        <img
-                          src={`http://localhost:5000/media/file/${image.file_id}`}
-                          alt={image.filename}
-                          className="media-thumbnail"
-                        />
-                        <p>Extracted Text: {image.extracted_text}</p>
-                        <p className="timestamp">
-                          {new Date(image.timestamp).toLocaleString()}
-                        </p>
-                      </div>
-                    ))
+                    selectedUser.images.map((image, index) => {
+                        console.log('Image data:', image); // Debug log
+                        return (
+                            <div key={index} className="media-item">
+                                <img
+                                    src={`http://localhost:5000/media/file/${image.file_id}`}
+                                    alt={image.filename || 'Image'}
+                                    className="media-thumbnail"
+                                    onError={(e) => {
+                                        console.error("Error loading image:", e);
+                                        e.target.style.display = 'none';
+                                        e.target.parentElement.innerHTML = 'Failed to load image';
+                                    }}
+                                />
+                                <div className="media-details">
+                                    <p className="filename">{image.filename}</p>
+                                    <p className="extracted-text">
+                                        {image.extracted_text || 'No extracted text available'}
+                                    </p>
+                                    <p className="timestamp">
+                                        {image.timestamp ? new Date(image.timestamp * 1000).toLocaleString() : 'No timestamp'}
+                                    </p>
+                                </div>
+                            </div>
+                        );
+                    })
                   ) : (
                     <p>No image uploads found.</p>
                   )}
@@ -336,11 +366,7 @@ const UserData = () => {
               </div>
 
               {/* Videos Section */}
-              <div
-                className={`popup-content-section ${
-                  activeTab === "videos" ? "active" : ""
-                }`}
-              >
+              <div className={`popup-content-section ${activeTab === "videos" ? "active" : ""}`}>
                 <div className="media-list">
                   {selectedUser.videos && selectedUser.videos.length > 0 ? (
                     selectedUser.videos.map((video, index) => (
@@ -352,10 +378,13 @@ const UserData = () => {
                           />
                           Your browser does not support the video tag.
                         </video>
-                        <p>Extracted Text: {video.extracted_text}</p>
-                        <p className="timestamp">
-                          {new Date(video.timestamp).toLocaleString()}
-                        </p>
+                        <div className="media-details">
+                          <p className="filename">{video.filename}</p>
+                          <p className="extracted-text">Extracted Text: {video.extracted_text}</p>
+                          <p className="timestamp">
+                            {new Date(video.timestamp * 1000).toLocaleString()}
+                          </p>
+                        </div>
                       </div>
                     ))
                   ) : (
@@ -365,11 +394,7 @@ const UserData = () => {
               </div>
 
               {/* Audio Section */}
-              <div
-                className={`popup-content-section ${
-                  activeTab === "audio" ? "active" : ""
-                }`}
-              >
+              <div className={`popup-content-section ${activeTab === "audio" ? "active" : ""}`}>
                 <div className="media-list">
                   {selectedUser.audios && selectedUser.audios.length > 0 ? (
                     selectedUser.audios.map((audio, index) => (
@@ -381,10 +406,13 @@ const UserData = () => {
                           />
                           Your browser does not support the audio tag.
                         </audio>
-                        <p>Extracted Text: {audio.extracted_text}</p>
-                        <p className="timestamp">
-                          {new Date(audio.timestamp).toLocaleString()}
-                        </p>
+                        <div className="media-details">
+                          <p className="filename">{audio.filename}</p>
+                          <p className="extracted-text">Extracted Text: {audio.extracted_text}</p>
+                          <p className="timestamp">
+                            {new Date(audio.timestamp * 1000).toLocaleString()}
+                          </p>
+                        </div>
                       </div>
                     ))
                   ) : (
@@ -394,26 +422,26 @@ const UserData = () => {
               </div>
 
               {/* Translations Section */}
-              <div
-                className={`popup-content-section ${
-                  activeTab === "translations" ? "active" : ""
-                }`}
-              >
-                <div className="media-list">
-                  {selectedUser.translations &&
-                  selectedUser.translations.length > 0 ? (
-                    selectedUser.translations.map((translation, index) => (
-                      <div key={index} className="media-item">
-                        <p>Original Text: {translation.original_text}</p>
-                        <p>Translated Text: {translation.translated_text}</p>
-                        <p className="timestamp">
-                          {new Date(translation.timestamp).toLocaleString()}
-                        </p>
-                      </div>
-                    ))
-                  ) : (
-                    <p>No translations found.</p>
-                  )}
+              <div className={`popup-content-section ${activeTab === "translations" ? "active" : ""}`}>
+                <div className="translations-list">
+                    {selectedUser.translations && selectedUser.translations.length > 0 ? (
+                        selectedUser.translations.map((translation, index) => (
+                            <div key={index} className="translation-item">
+                                <div className="translation-content">
+                                    <div className="original-text-box">
+                                        <h4>Original Text:</h4>
+                                        <p>{translation.original_text}</p>
+                                    </div>
+                                    <div className="translated-text-box">
+                                        <h4>Translated Text:</h4>
+                                        <p>{translation.translated_text}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <p className="no-data">No translations found.</p>
+                    )}
                 </div>
               </div>
 

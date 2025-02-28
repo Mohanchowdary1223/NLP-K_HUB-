@@ -65,27 +65,23 @@ function ProfileCard() {
                     setProfileImage(`http://localhost:5000/uploads/${email}/${profile_image}?t=${new Date().getTime()}`); 
                 }
 
-                const statsRes = await axios.get('http://localhost:5000/profile-stats', { withCredentials: true });
-                const { image_count, video_count, audio_count, translation_count } = statsRes.data;
-
+                // Get counts directly from multimedia_collection
+                const mediaResponse = await axios.get('http://localhost:5000/media/counts', {
+                    withCredentials: true
+                });
+                
                 setUploadCounts({
-                    imageUploads: image_count,
-                    videoUploads: video_count,
-                    audioUploads: audio_count,
-                    langTranslator: translation_count,
+                    imageUploads: mediaResponse.data.image_count,
+                    videoUploads: mediaResponse.data.video_count,
+                    audioUploads: mediaResponse.data.audio_count,
+                    langTranslator: mediaResponse.data.translation_count,
                 });
 
-                // Add media files fetch
-                const mediaRes = await axios.get('http://localhost:5000/media/files', {
+                // Fetch media files
+                const mediaFilesResponse = await axios.get('http://localhost:5000/user/media', {
                     withCredentials: true
                 });
-                setMediaFiles(mediaRes.data);
-
-                // Fetch media files from MongoDB
-                const mediaResponse = await axios.get('http://localhost:5000/user/media', {
-                    withCredentials: true
-                });
-                setMediaData(mediaResponse.data);
+                setMediaData(mediaFilesResponse.data);
             } catch (error) {
                 console.error('Error fetching data:', error);
             }

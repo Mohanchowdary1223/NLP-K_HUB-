@@ -459,38 +459,21 @@ def get_profile():
 @login_required
 def get_profile_stats():
     try:
-        user_folder = os.path.join(app.config['UPLOAD_FOLDER'], current_user.email)
-        image_extensions = {".jpg", ".jpeg", ".png", ".gif"}
-        audio_extensions = {".mp3", ".wav"}
-        video_extensions = {".mp4", ".avi", ".mov"}
-
-        image_count = 0
-        audio_count = 0
-        video_count = 0
-
-        if os.path.exists(user_folder):
-            for filename in os.listdir(user_folder):
-                file_extension = os.path.splitext(filename)[1].lower()
-                if file_extension in image_extensions:
-                    image_count += 1
-                elif file_extension in audio_extensions:
-                    audio_count += 1
-                elif file_extension in video_extensions:
-                    video_count += 1
-
-        # Count translations from translations_collection
+        # Get counts directly from MongoDB
+        image_count = multimedia_collection.count_documents({'email': current_user.email, 'type': 'image'})
+        video_count = multimedia_collection.count_documents({'email': current_user.email, 'type': 'video'})
+        audio_count = multimedia_collection.count_documents({'email': current_user.email, 'type': 'audio'})
         translation_count = translations_collection.count_documents({'email': current_user.email})
 
         return jsonify({
             "image_count": image_count,
-            "audio_count": audio_count,
             "video_count": video_count,
+            "audio_count": audio_count,
             "translation_count": translation_count
         })
-
     except Exception as e:
         print(f"Error fetching profile stats: {e}")
-        return jsonify({"error": "Failed to fetch profile statistics"}), 500
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/uploads/images', methods=['GET'])
 @login_required
@@ -625,55 +608,60 @@ def record_audio_endpoint():
 
 @app.route('/admin-users', methods=['GET'])
 def admin_users_data():
-    users = users_collection.find()  # Fetch all users
+    try:
+        users = list(users_collection.find())
+        user_list = []
+        
+        for user in users:
+            email = user.get('email', '')
+            
+            # Get media files from MongoDB with content_type
+            images = list(multimedia_collection.find(
+                {'email': email, 'type': 'image'},
+                {'_id': 0, 'file_id': 1, 'filename': 1, 'extracted_text': 1, 'timestamp': 1, 'content_type': 1}
+            ))
+            videos = list(multimedia_collection.find(
+                {'email': email, 'type': 'video'},
+                {'_id': 0, 'file_id': 1, 'filename': 1, 'extracted_text': 1, 'timestamp': 1, 'content_type': 1}
+            ))
+            audios = list(multimedia_collection.find(
+                {'email': email, 'type': 'audio'},
+                {'_id': 0, 'file_id': 1, 'filename': 1, 'extracted_text': 1, 'timestamp': 1, 'content_type': 1}
+            ))
 
-    user_list = []
-    for user in users:
-        email = user.get('email', '')
+            # Get translations
+            translations = list(translations_collection.find(
+                {'email': email},
+                {'_id': 0, 'original_text': 1, 'translated_text': 1, 'timestamp': 1}
+            ))
 
-        # Fetch media files for the user
-        user_folder = os.path.join(app.config['UPLOAD_FOLDER'], email)
-        if os.path.exists(user_folder):
-            image_files = [
-                f"http://localhost:5000/uploads/{email}/{f}"
-                for f in os.listdir(user_folder)
-                if f.lower().endswith(('png', 'jpg', 'jpeg', 'gif'))
-            ]
-            audio_files = [
-                f"http://localhost:5000/uploads/{email}/{f}"
-                for f in os.listdir(user_folder)
-                if f.lower().endswith(('mp3', 'wav', 'aac'))
-            ]
-            video_files = [
-                f"http://localhost:5000/uploads/{email}/{f}"
-                for f in os.listdir(user_folder)
-                if f.lower().endswith(('mp4', 'avi', 'mov', 'mkv'))
-            ]
-        else:
-            image_files = []
-            audio_files = []
-            video_files = []
+            # Convert ObjectId to string
+            for media in images + videos + audios:
+                if isinstance(media.get('file_id'), ObjectId):
+                    media['file_id'] = str(media['file_id'])
 
-        # Fetch translations for the user
-        translations = list(translations_collection.find({'email': email}, {'_id': 0}))
+            user_data = {
+                '_id': str(user.get('_id')),
+                'name': user.get('name', 'Unknown'),
+                'email': email,
+                'password': user.get('password', '********'),
+                'profile_image': user.get('profile_image'),
+                'images': images,
+                'videos': videos,
+                'audios': audios,
+                'translations': translations,
+                'image_count': len(images),
+                'video_count': len(videos),
+                'audio_count': len(audios),
+                'translation_count': len(translations)
+            }
+            user_list.append(user_data)
 
-        user_data = {
-            '_id': str(user['_id']),
-            'name': user.get('name', 'Unknown'),
-            'email': email,
-            'image_count': len(image_files),
-            'audio_count': len(audio_files),
-            'video_count': len(video_files),
-            'translation_count': len(translations),  # Count translations
-            'images': image_files,
-            'audios': audio_files,
-            'videos': video_files,
-            'translations': translations  # Include translations in the response
-        }
+        return jsonify(user_list), 200
 
-        user_list.append(user_data)
-
-    return jsonify(user_list), 200
+    except Exception as e:
+        print(f"Error fetching user data: {e}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/media/files', methods=['GET'])
 @login_required
@@ -769,6 +757,38 @@ def get_user_media():
         return jsonify(response)
     except Exception as e:
         print(f"Error fetching user media: {e}")
+        return jsonify({'error': str(e)}), 500
+
+# Add this new route
+@app.route('/media/counts', methods=['GET'])
+@login_required
+def get_media_counts():
+    try:
+        # Get counts from multimedia_collection
+        image_count = multimedia_collection.count_documents({
+            'email': current_user.email, 
+            'type': 'image'
+        })
+        video_count = multimedia_collection.count_documents({
+            'email': current_user.email, 
+            'type': 'video'
+        })
+        audio_count = multimedia_collection.count_documents({
+            'email': current_user.email, 
+            'type': 'audio'
+        })
+        translation_count = translations_collection.count_documents({
+            'email': current_user.email
+        })
+
+        return jsonify({
+            'image_count': image_count,
+            'video_count': video_count,
+            'audio_count': audio_count,
+            'translation_count': translation_count
+        })
+    except Exception as e:
+        print(f"Error getting media counts: {e}")
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
