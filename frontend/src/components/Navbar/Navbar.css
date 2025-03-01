@@ -45,6 +45,7 @@ nav {
     border-radius: 50%;
     cursor: pointer;
     margin-left: 30px;
+    height: 40px;
 }
 
 nav ul {

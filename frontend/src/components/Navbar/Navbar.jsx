@@ -9,12 +9,14 @@ import userPic from '../../assets/user.png';
 import Profile from '../../assets/profile.png';
 import Logout from '../../assets/logout.png';
 import logoImage from '../../assets/assets/DDLogo.png';
+import defaultpic from '../../assets/user-solid.png'
 
 const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);  // Mobile menu state
   const [profileOpen, setProfileOpen] = useState(false);  // Profile dropdown state
   const [userName, setUserName] = useState('');  // Add state for user name
   const [email, setEmail] = useState(''); // Add state for user email
+  const [profileImage, setProfileImage] = useState(defaultpic); // Change initial state to defaultpic
 
   // Add useEffect to fetch user data
   useEffect(() => {
@@ -25,8 +27,14 @@ const Navbar = () => {
         });
         setUserName(response.data.name); // Set user name
         setEmail(response.data.email);   // Set user email
+        
+        // Only update profile image if user has uploaded one
+        if (response.data.profile_image) {
+          setProfileImage(`http://localhost:5000/uploads/${response.data.email}/${response.data.profile_image}?t=${new Date().getTime()}`);
+        }
       } catch (error) {
         console.error('Error fetching user data:', error);
+        setProfileImage(defaultpic); // Set to default if there's an error
       }
     };
   
@@ -55,7 +63,7 @@ const Navbar = () => {
 
       {/* User Profile */}
       <img 
-        src={userPic} 
+        src={profileImage} 
         className="user-pic" 
         onClick={() => setProfileOpen(!profileOpen)} 
         alt="User" 
@@ -66,7 +74,7 @@ const Navbar = () => {
         <div className="sub-menu-wrap open-menu">
           <div className="sub-menu">
             <div className="user-info">
-              <img src={userPic} alt="User" />
+              <img src={profileImage} alt="User" />
               <h3>{userName}</h3>
             </div>
             <hr />

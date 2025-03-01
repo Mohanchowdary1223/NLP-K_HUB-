@@ -9,9 +9,10 @@ import AudtoTxt from '../../assets/assets/Audio to Text.png';
 import LangTranslator from '../../assets/assets/Language Translator.png';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import defaultpic from '../../assets/user-solid.png';
 
 function ProfileCard() {
-    const [profileImage, setProfileImage] = useState(User);
+    const [profileImage, setProfileImage] = useState(defaultpic); // Change initial state to defaultpic
     const [isEditing, setIsEditing] = useState(false);
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
@@ -27,6 +28,7 @@ function ProfileCard() {
         videoUploads: 0,
         audioUploads: 0,
         langTranslator: 0,
+        documentationUploads: 0  // Add this line
     });
 
     const [activeCard, setActiveCard] = useState(null);
@@ -44,7 +46,8 @@ function ProfileCard() {
     const [mediaData, setMediaData] = useState({
         images: [],
         videos: [],
-        audios: []
+        audios: [],
+        documentation: [] // Add documentation array
     });
 
     useEffect(() => {
@@ -61,32 +64,41 @@ function ProfileCard() {
                     state: state || '',
                 });
 
+                // Only update profile image if user has uploaded one
                 if (profile_image) {
                     setProfileImage(`http://localhost:5000/uploads/${email}/${profile_image}?t=${new Date().getTime()}`); 
                 }
-
-                // Get counts directly from multimedia_collection
-                const mediaResponse = await axios.get('http://localhost:5000/media/counts', {
-                    withCredentials: true
-                });
-                
-                setUploadCounts({
-                    imageUploads: mediaResponse.data.image_count,
-                    videoUploads: mediaResponse.data.video_count,
-                    audioUploads: mediaResponse.data.audio_count,
-                    langTranslator: mediaResponse.data.translation_count,
-                });
-
-                // Fetch media files
-                const mediaFilesResponse = await axios.get('http://localhost:5000/user/media', {
-                    withCredentials: true
-                });
-                setMediaData(mediaFilesResponse.data);
             } catch (error) {
                 console.error('Error fetching data:', error);
+                setProfileImage(defaultpic); // Set to default if there's an error
             }
         };
 
+        fetchData();
+    }, []);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                // Fetch profile data including documentation
+                const response = await axios.get('http://localhost:5000/user/media', {
+                    withCredentials: true
+                });
+                
+                console.log('Media response:', response.data); // Debug log
+                
+                // Update the mediaData state with documentation
+                setMediaData({
+                    ...mediaData,
+                    documentation: response.data.files?.filter(file => 
+                        file.source === 'documentation'
+                    ) || []
+                });
+            } catch (error) {
+                console.error('Error fetching media:', error);
+            }
+        };
+      
         fetchData();
     }, []);
 
@@ -281,6 +293,14 @@ function ProfileCard() {
                     <span className="upload-count">{uploadCounts.langTranslator} translations</span> 
                 </div> 
                
+
+                <div className="card" onClick={() => handleMediaView("synopsis")}>
+                    <img src={ImgtoTxt} alt="" className="card-icon" />
+                    <p>Synopsis uploades</p>
+                    <span className="upload-count">
+                        {uploadCounts.documentationUploads || 0} summaries
+                    </span>
+                </div>
             </div>
             
             {/* Media Popups */}
@@ -327,7 +347,7 @@ function ProfileCard() {
                         <h2 className="popup-title">Video History</h2>
                         <div className="media-list">
                             {mediaData.videos.length > 0 ? (
-                                mediaData.videos.map((video) => (
+                                mediaData.videos.filter(video => video.source !== 'documentation').map((video) => (
                                     <div key={video.file_id} className="media-item">
                                         <video controls className="media-thumbnail">
                                             <source 
@@ -407,6 +427,57 @@ function ProfileCard() {
 
 
             )}
+
+{activeCard === "synopsis" && (
+    <div className="popup-overlay">
+        <div className="popup-content">
+            <span className="popup-close" onClick={() => setActiveCard(null)}>
+                <FaTimes />
+            </span>
+            <h2 className="popup-title">Synopsis History</h2>
+            <div className="media-list">
+                {mediaData.documentation && mediaData.documentation.length > 0 ? (
+                    mediaData.documentation.map((doc) => (
+                        <div key={doc.file_id} className="media-item">
+                            <div className="media-content">
+                                <h3>{doc.filename}</h3>
+                                <div className="summary-content">
+                                    <h4>Summary:</h4>
+                                    <p>{doc.summary || doc.extracted_text}</p>
+                                    <h4>Original Document:</h4>
+                                    {doc.content_type && doc.content_type.includes('pdf') ? (
+                                        <iframe
+                                            src={`http://localhost:5000/media/file/${doc.file_id}`}
+                                            width="100%"
+                                            height="500px"
+                                            title="PDF Preview"
+                                            className="pdf-preview"
+                                        />
+                                    ) : (
+                                        <a 
+                                            href={`http://localhost:5000/media/file/${doc.file_id}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="file-link"
+                                        >
+                                            Download Original Document
+                                        </a>
+                                    )}
+                                    <p className="timestamp">
+                                        {new Date(doc.timestamp * 1000).toLocaleString()}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    ))
+                ) : (
+                    <p>No synopsis history found.</p>
+                )}
+            </div>
+        </div>
+    </div>
+)}
+
         </div>
     );
 }

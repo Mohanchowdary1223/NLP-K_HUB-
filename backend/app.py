@@ -741,7 +741,7 @@ def get_media_file(file_id):
 @login_required
 def get_user_media():
     try:
-        # Get all media files with their metadata for the current user
+        # Get all media files including documentation
         media = list(multimedia_collection.find(
             {'email': current_user.email},
             {
@@ -750,6 +750,9 @@ def get_user_media():
                 'type': 1, 
                 'filename': 1, 
                 'extracted_text': 1,
+                'summary': 1,
+                'source': 1,
+                'content_type': 1,
                 'timestamp': 1
             }
         ))
@@ -759,14 +762,18 @@ def get_user_media():
             if isinstance(item.get('file_id'), ObjectId):
                 item['file_id'] = str(item['file_id'])
 
-        # Group media by type
-        response = {
-            'images': [m for m in media if m['type'] == 'image'],
-            'videos': [m for m in media if m['type'] == 'video'],
-            'audios': [m for m in media if m['type'] == 'audio']
-        }
+        # Separate documentation items from regular media
+        documentation = [m for m in media if m.get('type') == 'documentation']
+        videos = [m for m in media if m['type'] == 'video' and m.get('source') != 'documentation']
+        images = [m for m in media if m['type'] == 'image']
+        audios = [m for m in media if m['type'] == 'audio']
 
-        return jsonify(response)
+        return jsonify({
+            'images': images,
+            'videos': videos,
+            'audios': audios,
+            'documentation': documentation  # Add separate documentation array
+        })
     except Exception as e:
         print(f"Error fetching user media: {e}")
         return jsonify({'error': str(e)}), 500
@@ -792,12 +799,18 @@ def get_media_counts():
         translation_count = translations_collection.count_documents({
             'email': current_user.email
         })
+        documentation_count = multimedia_collection.count_documents({
+            'email': current_user.email,
+            'type': 'documentation',
+            'source': 'documentation'
+        })
 
         return jsonify({
             'image_count': image_count,
             'video_count': video_count,
             'audio_count': audio_count,
-            'translation_count': translation_count
+            'translation_count': translation_count,
+            'documentation_count': documentation_count  # Add this line
         })
     except Exception as e:
         print(f"Error getting media counts: {e}")
@@ -806,74 +819,64 @@ def get_media_counts():
 @app.route('/process-document', methods=['POST'])
 @login_required
 def process_document():
-    temp_file = None
     try:
         if 'file' not in request.files:
             return jsonify({'error': 'No file uploaded'}), 400
 
         file = request.files['file']
-        if file.filename == '':
-            return jsonify({'error': 'No file selected'}), 400
+        source = request.form.get('source', 'documentation')  # Get source information
 
-        # Create temporary file and save content
-        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1]) as tmp:
-            file.save(tmp.name)
-            temp_path = tmp.name
+        # Store file in GridFS
+        file_id = fs.put(
+            file.read(),
+            filename=secure_filename(file.filename),
+            content_type=file.content_type
+        )
 
+        # Process the file and get text/summary
         try:
-            # Extract text based on file type
-            extracted_text = ""
-            classification = {}
-            
-            if file.content_type == 'application/pdf':
-                extracted_text = extract_content_from_pdf(temp_path)
-            elif file.content_type.startswith('video/'):
-                result = main(temp_path)
-                # Ensure we're getting the text from the video processing result
-                extracted_text = result.get("extracted_text", "")
-                if not extracted_text and isinstance(result, str):
-                    # Handle case where result might be direct string
-                    extracted_text = result
-                classification = result.get("classification", {})
-            else:
-                return jsonify({'error': f'Unsupported file type: {file.content_type}'}), 400
+            # Create temporary file for processing
+            with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1]) as tmp:
+                file.seek(0)  # Reset file pointer
+                file.save(tmp.name)
+                temp_path = tmp.name
 
-            if not extracted_text:
-                return jsonify({'error': 'No text could be extracted'}), 400
+                if file.content_type == 'application/pdf':
+                    extracted_text = extract_content_from_pdf(temp_path)
+                    summary = summarize_text(extracted_text)
+                else:  # video file
+                    result = main(temp_path)
+                    extracted_text = result.get("extracted_text", "")
+                    if isinstance(result, str):
+                        extracted_text = result
+                    summary = summarize_text(extracted_text)
 
-            # Generate summary for the extracted text
-            summary = summarize_text(extracted_text)
-
-            # Store in MongoDB
-            doc_data = {
-                'email': current_user.email,
-                'filename': secure_filename(file.filename),
-                'type': file.content_type.split('/')[0],
-                'content_type': file.content_type,
-                'original_text': extracted_text,
-                'summary': summary,
-                'classification': classification,
-                'timestamp': time.time()
-            }
-            multimedia_collection.insert_one(doc_data)
-
-            # Return both summary and extracted text
-            return jsonify({
-                'status': 'success',
-                'extracted_text': summary if summary else extracted_text,
-                'classification': classification
-            })
+            # Clean up temp file
+            os.unlink(temp_path)
 
         except Exception as e:
             print(f"Processing error: {str(e)}")
             return jsonify({'error': f'Error processing file: {str(e)}'}), 500
 
-        finally:
-            if temp_path:
-                try:
-                    os.unlink(temp_path)
-                except Exception as e:
-                    print(f"Error deleting temp file: {str(e)}")
+        # Store metadata in MongoDB
+        doc_data = {
+            'email': current_user.email,
+            'file_id': str(file_id),
+            'filename': secure_filename(file.filename),
+            'type': 'documentation',  # New type for documentation files
+            'content_type': file.content_type,
+            'original_text': extracted_text,
+            'summary': summary,
+            'source': source,
+            'timestamp': time.time()
+        }
+        multimedia_collection.insert_one(doc_data)
+
+        return jsonify({
+            "status": "success",
+            "file_id": str(file_id),
+            "extracted_text": summary
+        })
 
     except Exception as e:
         print(f"Server error: {str(e)}")

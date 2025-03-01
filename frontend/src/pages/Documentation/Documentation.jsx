@@ -44,6 +44,7 @@ function VideoToText() {
       const formData = new FormData();
       const file = fileInputRef.current.files[0];
       formData.append('file', file);
+      formData.append('source', 'documentation'); // Add this line to identify documentation uploads
 
       console.log('Uploading file:', file.name, 'Type:', file.type); // Debug log
 

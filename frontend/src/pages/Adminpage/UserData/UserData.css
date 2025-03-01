@@ -809,6 +809,10 @@ b {
   padding: 15px;
 }
 
+.media-details1{
+    display: flex;
+    flex-direction: row;
+}
 .filename {
   font-weight: bold;
   margin-bottom: 8px;
@@ -850,7 +854,6 @@ b {
 
 .translation-content {
     display: flex;
-    flex-direction: column;
     gap: 15px;
 }
 

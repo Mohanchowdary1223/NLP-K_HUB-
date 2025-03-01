@@ -40,12 +40,17 @@ const UserData = () => {
         if (!response.ok) throw new Error('Failed to fetch users');
         const data = await response.json();
         
+        // Log the full user data to check the structure
+        console.log('Fetched user data:', data);
+        
         // Modify user data to include profile image URL
         const usersWithProfileImages = data.map(user => ({
           ...user,
           profile: user.profile_image 
             ? `http://localhost:5000/uploads/${user.email}/${user.profile_image}`
-            : user
+            : user,
+          // Make sure documentation data is properly mapped
+          documentation: user.documentation || []
         }));
         
         setUsers(usersWithProfileImages);
@@ -156,6 +161,43 @@ const UserData = () => {
       { date: "2024-03-13", action: "New document uploaded" },
     ],
   };
+
+  // Add this function to handle PDF display
+  const renderPDFPreview = (doc) => {
+    if (!doc.file_id) return null;
+    
+    return (
+      <div className="pdf-preview-container">
+        <h4>{doc.filename}</h4>
+        <iframe
+          src={`http://localhost:5000/media/file/${doc.file_id}`}
+          width="100%"
+          height="500px"
+          title={doc.filename}
+          className="pdf-preview"
+        />
+        <div className="pdf-details">
+          <p>Summary: {doc.summary || doc.extracted_text || 'No summary available'}</p>
+          <p>Uploaded: {new Date(doc.timestamp * 1000).toLocaleString()}</p>
+        </div>
+      </div>
+    );
+  };
+
+  // Modify the Synopsis Section to properly handle documentation files
+  const SynopsisSection = ({ user }) => (
+    <div className="synopsis-list">
+      {user.documentation && user.documentation.length > 0 ? (
+        user.documentation.map((doc, index) => (
+          <div key={index} className="synopsis-item">
+            {renderPDFPreview(doc)}
+          </div>
+        ))
+      ) : (
+        <p className="no-data">No documentation found.</p>
+      )}
+    </div>
+  );
 
   return (
     <div className="admin-container">
@@ -321,11 +363,11 @@ const UserData = () => {
                 </button>
                 <button
                   className={`popup-tab ${
-                    activeTab === "history" ? "active" : ""
+                    activeTab === "synopsis" ? "active" : ""
                   }`}
-                  onClick={() => setActiveTab("history")}
+                  onClick={() => setActiveTab("synopsis")}
                 >
-                  History
+                  Synopsis
                 </button>
               </div>
 
@@ -445,19 +487,15 @@ const UserData = () => {
                 </div>
               </div>
 
-              {/* History Section */}
+              {/* Synopsis Section */}
               <div
                 className={`popup-content-section ${
-                  activeTab === "history" ? "active" : ""
+                  activeTab === "synopsis" ? "active" : ""
                 }`}
               >
-                {userDetails.history.map((item, index) => (
-                  <div key={index} className="history-item">
-                    <div className="history-date">{item.date}</div>
-                    <div className="history-action">{item.action}</div>
-                  </div>
-                ))}
+                <SynopsisSection user={selectedUser} />
               </div>
+
             </div>
           </div>
         )}
