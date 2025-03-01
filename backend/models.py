@@ -25,7 +25,7 @@ class User(UserMixin):
 
 # MongoDB setup with error handling
 try:
-    client = MongoClient("mongodb://localhost:27017/")
+    client = MongoClient("mongodb+srv://project:database@cluster0.qff9s.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
     db = client["NLP_SIGN"]
 
     # Access collections

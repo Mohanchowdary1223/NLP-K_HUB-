@@ -47,7 +47,7 @@ function ProfileCard() {
         images: [],
         videos: [],
         audios: [],
-        documentation: [] // Add documentation array
+        documentation: []
     });
 
     useEffect(() => {
@@ -81,18 +81,35 @@ function ProfileCard() {
         const fetchData = async () => {
             try {
                 // Fetch profile data including documentation
-                const response = await axios.get('http://localhost:5000/user/media', {
-                    withCredentials: true
-                });
+                const [mediaResponse, translationsResponse] = await Promise.all([
+                    axios.get('http://localhost:5000/user/media', {
+                        withCredentials: true
+                    }),
+                    axios.get('http://localhost:5000/uploads/translations', {
+                        withCredentials: true
+                    })
+                ]);
                 
-                console.log('Media response:', response.data); // Debug log
                 
                 // Update the mediaData state with documentation
                 setMediaData({
                     ...mediaData,
-                    documentation: response.data.files?.filter(file => 
-                        file.source === 'documentation'
-                    ) || []
+                    documentation: mediaResponse.data.documentation || [],
+                    images: mediaResponse.data.images || [],
+                    videos: mediaResponse.data.videos || [],
+                    audios: mediaResponse.data.audios || [],
+                });
+
+                // Set translations
+                setMediaList(translationsResponse.data);
+
+                setUploadCounts({
+                    ...uploadCounts,
+                    documentationUploads: mediaResponse.data.documentation || 0,
+                    imageUploads: mediaResponse.data.images.length || 0,
+                    videoUploads: mediaResponse.data.videos.length || 0,
+                    audioUploads: mediaResponse.data.audios.length || 0,
+                    langTranslator: translationsResponse.data.length || 0,
                 });
             } catch (error) {
                 console.error('Error fetching media:', error);
@@ -163,6 +180,7 @@ function ProfileCard() {
         setActiveCard(mediaType);
     };
 
+    const DEFAULT_PROFILE_IMAGE = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
     return (
         <div>
             <Navbar />
@@ -172,7 +190,13 @@ function ProfileCard() {
                     <span>Edit Profile</span>
                 </div>
                 <div className="profile-image-container">
-                    <img src={profileImage} alt="Profile" className="profile-image" />
+                    <img src={profileImage || DEFAULT_PROFILE_IMAGE}
+                          alt="Profile"
+                          onError={(e) => {
+                            e.target.src = DEFAULT_PROFILE_IMAGE; // Fallback to default image
+                            console.error("Error loading profile image");
+                          }} 
+                        className="profile-image" />
                     <input
                         type="file"
                         accept="image/*"
@@ -273,24 +297,11 @@ function ProfileCard() {
                 </div>
                 <div
                     className="card"
-                    onClick={() => {
-                        setActiveCard("langTranslator");
-                        const fetchData = async () => {
-                            try {
-                                const res = await axios.get('http://localhost:5000/uploads/translations', {
-                                    withCredentials: true,
-                                });
-                                setMediaList(res.data);
-                            } catch (error) {
-                                console.error('Error fetching language translations:', error);
-                            }
-                        };
-                        fetchData();
-                    }}
+                    onClick={() => setActiveCard("langTranslator")}
                 >
                     <img src={LangTranslator} alt="" className="card-icon" />
                     <p>Language Translator</p>
-                    <span className="upload-count">{uploadCounts.langTranslator} translations</span> 
+                    <span className="upload-count">{mediaList.length} translations</span> 
                 </div> 
                
 
@@ -298,7 +309,7 @@ function ProfileCard() {
                     <img src={ImgtoTxt} alt="" className="card-icon" />
                     <p>Synopsis uploades</p>
                     <span className="upload-count">
-                        {uploadCounts.documentationUploads || 0} summaries
+                        {mediaData.documentation.length || 0} summaries
                     </span>
                 </div>
             </div>

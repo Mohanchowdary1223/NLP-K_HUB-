@@ -79,7 +79,7 @@ def upload_file():
 
 
 # Connect to MongoDB
-client = MongoClient("mongodb://localhost:27017/")
+client = MongoClient("mongodb+srv://project:database@cluster0.qff9s.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
 db = client['NLP_SIGN']  # Database name
 translations_collection = db['translations']  # Collection for storing translations
 original_texts_collection = db['original_texts']  # Collection for original untranslated text
@@ -647,6 +647,11 @@ def admin_users_data():
                 {'_id': 0, 'original_text': 1, 'translated_text': 1, 'timestamp': 1}
             ))
 
+            documentation = list(multimedia_collection.find(
+                {'email': email, 'type': 'documentation'},
+                {'_id': 0, 'file_id': 1, 'filename': 1, 'extracted_text': 1, 'timestamp': 1, 'content_type': 1}
+            ))
+
             # Convert ObjectId to string
             for media in images + videos + audios:
                 if isinstance(media.get('file_id'), ObjectId):
@@ -665,7 +670,9 @@ def admin_users_data():
                 'image_count': len(images),
                 'video_count': len(videos),
                 'audio_count': len(audios),
-                'translation_count': len(translations)
+                'translation_count': len(translations),
+                'documentation': documentation,
+                'documentation_count': len(documentation)
             }
             user_list.append(user_data)
 

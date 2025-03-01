@@ -126,7 +126,7 @@ keywords = {
                     'off-campus', 'return', 'daily journey']
 }
 # Connect to MongoDB
-client = MongoClient("mongodb://localhost:27017/") 
+client = MongoClient("mongodb+srv://project:database@cluster0.qff9s.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0") 
 # mongodb+srv://project:<database>@cluster0.qff9s.mongodb.net/
 db = client['NLP_SIGN']  # Your database name
 

@@ -7,6 +7,9 @@ import add_icon from "../../../assets/add_icon.png";
 import order_icon from "../../../assets/order_icon.png";
 import logoImage from "../../../assets/assets/DDLogo1.png";
 
+// Add default profile image constant
+const DEFAULT_PROFILE_IMAGE = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+
 const Navbar = () => (
   <div className="navbar-a">
     <img src={logoImage} alt="Logo" className="logo-image-admin" />
@@ -48,7 +51,7 @@ const UserData = () => {
           ...user,
           profile: user.profile_image 
             ? `http://localhost:5000/uploads/${user.email}/${user.profile_image}`
-            : user,
+            : DEFAULT_PROFILE_IMAGE,
           // Make sure documentation data is properly mapped
           documentation: user.documentation || []
         }));
@@ -111,55 +114,6 @@ const UserData = () => {
 
   const handleMediaClick = (media, type) => {
     setSelectedMedia({ ...media, type });
-  };
-
-  // Mock user details (replace with actual data from backend if needed)
-  const userDetails = {
-    images: [
-      {
-        id: 1,
-        url: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f",
-        title: "Team Meeting",
-      },
-      {
-        id: 2,
-        url: "https://images.unsplash.com/photo-1497493292307-31c376b6e479",
-        title: "Project Discussion",
-      },
-    ],
-    videos: [
-      {
-        id: 1,
-        url: "https://www.w3schools.com/html/mov_bbb.mp4",
-        title: "Training Session 1",
-      },
-      {
-        id: 2,
-        url: "https://www.w3schools.com/html/movie.mp4",
-        title: "Product Demo",
-      },
-    ],
-    audio: [
-      {
-        id: 1,
-        url: "https://www.w3schools.com/html/horse.mp3",
-        title: "Voice Note 1",
-      },
-      {
-        id: 2,
-        url: "https://www.w3schools.com/html/horse.mp3",
-        title: "Meeting Recording",
-      },
-    ],
-    translations: [
-      { language: "Spanish", text: "Hola Mundo" },
-      { language: "French", text: "Bonjour le Monde" },
-    ],
-    history: [
-      { date: "2024-03-15", action: "Profile updated" },
-      { date: "2024-03-14", action: "Password changed" },
-      { date: "2024-03-13", action: "New document uploaded" },
-    ],
   };
 
   // Add this function to handle PDF display
@@ -236,11 +190,11 @@ const UserData = () => {
                       />
                       <label htmlFor={`file-input-${user._id}`}>
                         <img
-                          src={user.profile || user}
+                          src={user.profile || DEFAULT_PROFILE_IMAGE}
                           alt="Profile"
                           className="profile-img"
                           onError={(e) => {
-                            e.target.src = user; // Fallback to default image
+                            e.target.src = DEFAULT_PROFILE_IMAGE; // Fallback to default image
                             console.error("Error loading profile image");
                           }}
                         />
@@ -248,11 +202,11 @@ const UserData = () => {
                     </>
                   ) : (
                     <img
-                      src={user.profile || user}
+                      src={user.profile || DEFAULT_PROFILE_IMAGE}
                       alt="Profile"
                       className="profile-img"
                       onError={(e) => {
-                        e.target.src = user; // Fallback to default image
+                        e.target.src = DEFAULT_PROFILE_IMAGE; // Fallback to default image
                         console.error("Error loading profile image");
                       }}
                     />
