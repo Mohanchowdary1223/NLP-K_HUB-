@@ -18,7 +18,8 @@ import uuid
 import time
 from bson.objectid import ObjectId
 from gridfs import GridFS
-
+from extractive_summarization import extract_content_from_pdf, summarize_text
+import tempfile
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -791,8 +792,135 @@ def get_media_counts():
         print(f"Error getting media counts: {e}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/process-document', methods=['POST'])
+@login_required
+def process_document():
+    temp_file = None
+    try:
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file uploaded'}), 400
+
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+
+        # Create temporary file and save content
+        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1]) as tmp:
+            file.save(tmp.name)
+            temp_path = tmp.name
+
+        try:
+            # Extract text based on file type
+            extracted_text = ""
+            classification = {}
+            
+            if file.content_type == 'application/pdf':
+                extracted_text = extract_content_from_pdf(temp_path)
+            elif file.content_type.startswith('video/'):
+                result = main(temp_path)
+                # Ensure we're getting the text from the video processing result
+                extracted_text = result.get("extracted_text", "")
+                if not extracted_text and isinstance(result, str):
+                    # Handle case where result might be direct string
+                    extracted_text = result
+                classification = result.get("classification", {})
+            else:
+                return jsonify({'error': f'Unsupported file type: {file.content_type}'}), 400
+
+            if not extracted_text:
+                return jsonify({'error': 'No text could be extracted'}), 400
+
+            # Generate summary for the extracted text
+            summary = summarize_text(extracted_text)
+
+            # Store in MongoDB
+            doc_data = {
+                'email': current_user.email,
+                'filename': secure_filename(file.filename),
+                'type': file.content_type.split('/')[0],
+                'content_type': file.content_type,
+                'original_text': extracted_text,
+                'summary': summary,
+                'classification': classification,
+                'timestamp': time.time()
+            }
+            multimedia_collection.insert_one(doc_data)
+
+            # Return both summary and extracted text
+            return jsonify({
+                'status': 'success',
+                'extracted_text': summary if summary else extracted_text,
+                'classification': classification
+            })
+
+        except Exception as e:
+            print(f"Processing error: {str(e)}")
+            return jsonify({'error': f'Error processing file: {str(e)}'}), 500
+
+        finally:
+            if temp_path:
+                try:
+                    os.unlink(temp_path)
+                except Exception as e:
+                    print(f"Error deleting temp file: {str(e)}")
+
+    except Exception as e:
+        print(f"Server error: {str(e)}")
+        return jsonify({'error': f'Server error: {str(e)}'}), 500
+
+@app.route('/get-summary/<doc_id>', methods=['GET'])
+@login_required
+def get_summary(doc_id):
+    try:
+        doc = multimedia_collection.find_one({
+            '_id': ObjectId(doc_id),
+            'email': current_user.email
+        })
+        
+        if not doc:
+            return jsonify({'error': 'Document not found'}), 404
+
+        return jsonify({
+            'summary': doc.get('summary', ''),
+            'original_text': doc.get('original_text', '')
+        })
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.errorhandler(500)
+def internal_error(error):
+    print(f"Internal error: {str(error)}")
+    return jsonify({'error': 'Internal server error'}), 500
+
+@app.errorhandler(404) 
+def not_found_error(error):
+    return jsonify({'error': 'Resource not found'}), 404
+
+def initialize_nltk_quietly():
+    import nltk
+    try:
+        # Suppress NLTK download messages
+        import warnings
+        warnings.filterwarnings('ignore')
+        
+        nltk.data.find('tokenizers/punkt')
+        nltk.data.find('corpora/stopwords')
+    except LookupError:
+        # Download required NLTK data silently
+        nltk.download('punkt', quiet=True)
+        nltk.download('stopwords', quiet=True)
+
 if __name__ == '__main__':
-    if users_collection is not None and userdata_collection is not None:
+    try:
+        # Initialize NLTK quietly
+        initialize_nltk_quietly()
+        
+        # Ensure required collections exist
+        if not users_collection or not userdata_collection:
+            raise RuntimeError("MongoDB collections not properly initialized")
+        
         app.run(debug=True)
-    else:
-        print("MongoDB collections are not properly initialized. Exiting.")
+        
+    except Exception as e:
+        print(f"Failed to start application: {str(e)}")
