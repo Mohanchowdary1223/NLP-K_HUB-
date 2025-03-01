@@ -37,25 +37,24 @@ function VideoToText() {
           },
         });
 
-        if (response.status === 200) {
-          setConvertedText(response.data.extracted_text || 'No text extracted');
+        console.log("Response from server:", response.data); // Add this line for debugging
+
+        if (response.data && response.data.extracted_text) {
+          setConvertedText(response.data.extracted_text);
           setIsVisible(true);
         } else {
-          console.error("Unexpected response:", response);
-          alert("Conversion failed. Please try again.");
+          console.error("No extracted text in response:", response);
+          alert("No text could be extracted from the video.");
         }
       } catch (error) {
         console.error("Error converting media:", error);
-        if (error.response && error.response.status === 404) {
-          alert("Endpoint not found. Ensure the backend server is running.");
-        } else {
-          alert("An error occurred during conversion. Please try again later.");
-        }
+        console.error("Error response:", error.response); // Add this line for debugging
+        alert(error.response?.data?.error || "An error occurred during conversion.");
       } finally {
         setIsLoading(false);
       }
     } else {
-      alert('Please upload an image or video first!');
+      alert('Please upload a video first!');
     }
   };
 

@@ -347,25 +347,36 @@ def convert_video():
 
         # Process the video
         result = main(video_path)
+        
+        # Ensure result contains extracted_text
+        if isinstance(result, str):
+            extracted_text = result
+            classification = {}
+        else:
+            extracted_text = result.get("extracted_text", "")
+            classification = result.get("classification", {})
+
+        if not extracted_text:
+            return jsonify({"error": "No text could be extracted from the video"}), 400
 
         # Store video metadata in MongoDB
         multimedia_collection.insert_one({
             'email': current_user.email,
             'filepath': video_path,
             'type': 'video',
-            'extracted_text': result.get("extracted_text"),
-            'classification': result.get("classification"),
+            'extracted_text': extracted_text,
+            'classification': classification,
             'timestamp': time.time()
         })
 
         return jsonify({
-            "extracted_text": result.get("extracted_text"),
-            "classification": result.get("classification")
+            "extracted_text": extracted_text,
+            "classification": classification
         })
 
     except Exception as e:
-        print("Error in /convert-video:", e)
-        return jsonify({"error": "An internal error occurred during conversion"}), 500
+        print("Error in /convert-video:", str(e))
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/profile/upload-image', methods=['POST'])
 @login_required
