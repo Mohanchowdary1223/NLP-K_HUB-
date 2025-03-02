@@ -65,13 +65,7 @@ const UserData = () => {
     fetchUsers();
   }, []);
 
-  const handleEdit = (id) => {
-    setUsers(
-      users.map((user) =>
-        user._id === id ? { ...user, isEditing: !user.isEditing } : user
-      )
-    );
-  };
+
 
   const handleChange = (id, field, value) => {
     setUsers(
@@ -96,13 +90,6 @@ const UserData = () => {
     }
   };
 
-  const handleSave = (id) => {
-    setUsers(
-      users.map((user) =>
-        user._id === id ? { ...user, isEditing: false } : user
-      )
-    );
-  };
 
   const handleUserClick = (user) => {
     if (!user.isEditing) {
@@ -131,7 +118,7 @@ const UserData = () => {
           className="pdf-preview"
         />
         <div className="pdf-details">
-          <p>Summary: {doc.summary || doc.extracted_text || 'No summary available'}</p>
+          <p>Summary: {doc.summary || doc.extracted_text|| 'No summary available'}</p>
           <p>Uploaded: {new Date(doc.timestamp * 1000).toLocaleString()}</p>
         </div>
       </div>
@@ -247,19 +234,7 @@ const UserData = () => {
                 )}
 
                 <div className="actions" onClick={(e) => e.stopPropagation()}>
-                  {user.isEditing ? (
-                    <FaSave
-                      className="save-icon"
-                      title="Save"
-                      onClick={() => handleSave(user._id)}
-                    />
-                  ) : (
-                    <FaEdit
-                      className="edit-icon-a"
-                      title="Edit"
-                      onClick={() => handleEdit(user._id)}
-                    />
-                  )}
+                 
                   <FaTrash className="delete-icon-a" title="Delete" />
                 </div>
               </div>

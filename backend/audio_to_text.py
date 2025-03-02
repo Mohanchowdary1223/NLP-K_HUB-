@@ -103,7 +103,7 @@ keywords = {
 }
 
 # Connect to MongoDB
-client = MongoClient("mongodb+srv://project:database@cluster0.qff9s.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+client = MongoClient("mongodb://localhost:27017/")
 db = client['NLP_SIGN']  # Your database name
 
 def convert_mp3_to_wav(mp3_path, wav_output_path):
