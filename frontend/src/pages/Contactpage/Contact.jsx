@@ -32,8 +32,13 @@ const Contact = () => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                credentials: 'include', // Include cookies if needed
-                body: JSON.stringify(formData),
+                credentials: 'include', // This ensures cookies are sent for authentication
+                body: JSON.stringify({
+                    name: formData.name,
+                    message: formData.message,
+                    timestamp: Math.floor(Date.now() / 1000)
+                    // Removed email from payload since we'll use the authenticated user's email
+                }),
             });
 
             const result = await response.json();
@@ -43,7 +48,7 @@ const Contact = () => {
                 setResponseType('success');
                 setFormData({ name: '', email: '', message: '' }); // Clear form
             } else {
-                setResponseMessage(result.error || 'Failed to submit the form.');
+                setResponseMessage(result.error || 'Failed to submit the form. Please make sure you are logged in.');
                 setResponseType('error');
             }
         } catch (error) {
@@ -114,8 +119,9 @@ const Contact = () => {
                                     id="email"
                                     value={formData.email}
                                     onChange={handleInputChange}
-                                    placeholder="Enter your email"
+                                    placeholder="Your logged in email will be used"
                                     className="contact-input"
+                                    disabled
                                     required
                                 />
                             </div>

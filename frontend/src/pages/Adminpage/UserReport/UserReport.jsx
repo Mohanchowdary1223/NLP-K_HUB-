@@ -15,7 +15,8 @@ import { NavLink } from 'react-router-dom';
 import './UserReport.css';
 import user from '../../../assets/user.png';
 import add_icon from '../../../assets/add_icon.png';
-import order_icon from '../../../assets/order_icon.png';
+import logoImage from "../../../assets/assets/DDLogo1.png";
+
 
 ChartJS.register(
   CategoryScale,
@@ -26,16 +27,6 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend
-);
-
-const Navbar = () => (
-  <div className='navbar-a'>
-    <h2 className="logo-a">Data Dialect.</h2>
-    <div className="nav-links">
-      <NavLink to='/userdata' className="nav-link">Users List</NavLink>
-      <NavLink to='/userreport' className="nav-link">Report</NavLink>
-    </div>
-  </div>
 );
 
 const UserReport = () => {
@@ -85,7 +76,14 @@ const UserReport = () => {
   return (
     <div className="admin-container">
       <div className="admin-content">
-        <Navbar />
+        <div className='navbar-a'>
+    <img src={logoImage} alt="Logo" className="logo-image-admin" />
+          <div className="nav-links">
+            <NavLink to='/userdata' className="nav-link">Users List</NavLink>
+            <NavLink to='/userreport' className="nav-link">Report</NavLink>
+            <NavLink to='/' className="home-btn">Home</NavLink>
+          </div>
+        </div>
         <div className="report-container">
           <div className="report-header">
             <div className="report-tabs">

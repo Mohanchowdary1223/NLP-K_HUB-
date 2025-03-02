@@ -46,14 +46,20 @@ const UserData = () => {
         // Log the full user data to check the structure
         console.log('Fetched user data:', data);
         
-        // Modify user data to include profile image URL
+        // Modify user data to include profile image URL and handle missing fields
         const usersWithProfileImages = data.map(user => ({
           ...user,
+          name: user.name || 'No Name',
+          email: user.email || 'No Email',
+          password: '*****', // For security, don't display actual password
           profile: user.profile_image 
             ? `http://localhost:5000/uploads/${user.email}/${user.profile_image}`
             : DEFAULT_PROFILE_IMAGE,
-          // Make sure documentation data is properly mapped
-          documentation: user.documentation || []
+          documentation: user.documentation || [],
+          image_count: user.image_count || 0,
+          video_count: user.video_count || 0,
+          audio_count: user.audio_count || 0,
+          translation_count: user.translation_count || 0,
         }));
         
         setUsers(usersWithProfileImages);
@@ -105,40 +111,86 @@ const UserData = () => {
 
   // Add this function to handle PDF display
   const renderPDFPreview = (doc) => {
-    if (!doc.file_id) return null;
+    console.log("Rendering PDF preview for document:", doc); // Debug log
+    if (!doc.file_id) {
+        console.log("No file_id found in document"); // Debug log
+        return null;
+    }
     
     return (
-      <div className="pdf-preview-container">
-        <h4>{doc.filename}</h4>
-        <iframe
-          src={`http://localhost:5000/media/file/${doc.file_id}`}
-          width="100%"
-          height="500px"
-          title={doc.filename}
-          className="pdf-preview"
-        />
-        <div className="pdf-details">
-          <p>Summary: {doc.summary || doc.extracted_text|| 'No summary available'}</p>
-          <p>Uploaded: {new Date(doc.timestamp * 1000).toLocaleString()}</p>
+        <div className="pdf-preview-container">
+            <h4>{doc.filename}</h4>
+            <iframe
+                src={`http://localhost:5000/media/file/${doc.file_id}`}
+                width="100%"
+                height="500px"
+                title={doc.filename}
+                className="pdf-preview"
+            />
+            <div className="pdf-details">
+                {/* Add debug logs */}
+                {console.log("Summary:", doc.summary)}
+                {console.log("Extracted text:", doc.extracted_text)}
+                <p>Summary: {doc.summary || (doc.extracted_text ? doc.extracted_text.slice(0, 200) + '...' : 'No summary available')}</p>
+                <p>Uploaded: {new Date(doc.timestamp * 1000).toLocaleString()}</p>
+            </div>
         </div>
-      </div>
     );
-  };
+};
 
   // Modify the Synopsis Section to properly handle documentation files
-  const SynopsisSection = ({ user }) => (
-    <div className="synopsis-list">
-      {user.documentation && user.documentation.length > 0 ? (
-        user.documentation.map((doc, index) => (
-          <div key={index} className="synopsis-item">
-            {renderPDFPreview(doc)}
+  const SynopsisSection = ({ user }) => {
+    console.log("User documentation data:", user.documentation); // Debug log
+    return (
+        <div className="synopsis-list">
+            {user.documentation && user.documentation.length > 0 ? (
+                user.documentation.map((doc, index) => {
+                    console.log("Processing document:", doc); // Debug log
+                    return (
+                        <div key={index} className="synopsis-item">
+                            {renderPDFPreview(doc)}
+                        </div>
+                    );
+                })
+            ) : (
+                <p className="no-data">No documentation found.</p>
+            )}
+        </div>
+    );
+};
+
+// Add this new component after SynopsisSection
+const MessagesSection = ({ user }) => {
+  const formatDate = (timestamp) => {
+    if (!timestamp) return 'No date';
+    return new Date(timestamp * 1000).toLocaleString();
+  };
+
+  // Sort messages by timestamp in descending order (most recent first)
+  const sortedMessages = user.messages 
+    ? [...user.messages].sort((a, b) => b.timestamp - a.timestamp)
+    : [];
+
+  if (!sortedMessages.length) {
+    return <div className="messages-list"><p className="no-data">No messages found.</p></div>;
+  }
+
+  return (
+    <div className="messages-list">
+      {sortedMessages.map((message, index) => (
+        <div key={index} className="message-item">
+          <div className="message-header">
+            <span className="message-sender">{message.name}</span>
+            <span className="message-time">{formatDate(message.timestamp)}</span>
           </div>
-        ))
-      ) : (
-        <p className="no-data">No documentation found.</p>
-      )}
+          <div className="message-content">
+            <p className="message-text">{message.message}</p>
+          </div>
+        </div>
+      ))}
     </div>
   );
+};
 
   return (
     <div className="admin-container">
@@ -157,88 +209,39 @@ const UserData = () => {
               <b>Actions</b>
             </div>
 
-            {/* Table Data */}
-            {users.map((user, index) => (
-              <div
-                key={user._id}
-                className="list-table-format"
-                onClick={() => handleUserClick(user)}
-              >
-                <p>{index + 1}</p>
-                <div className="profile-container">
-                  {user.isEditing ? (
-                    <>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => handleProfileChange(user._id, e)}
-                        style={{ display: "none" }}
-                        id={`file-input-${user._id}`}
-                      />
-                      <label htmlFor={`file-input-${user._id}`}>
-                        <img
-                          src={user.profile || DEFAULT_PROFILE_IMAGE}
-                          alt="Profile"
-                          className="profile-img"
-                          onError={(e) => {
-                            e.target.src = DEFAULT_PROFILE_IMAGE; // Fallback to default image
-                            console.error("Error loading profile image");
-                          }}
-                        />
-                      </label>
-                    </>
-                  ) : (
+            {/* Table Data - Map through all users */}
+            {users.length > 0 ? (
+              users.map((user, index) => (
+                <div
+                  key={user._id || index}
+                  className="list-table-format"
+                  onClick={() => handleUserClick(user)}
+                >
+                  <p>{index + 1}</p>
+                  <div className="profile-container">
                     <img
                       src={user.profile || DEFAULT_PROFILE_IMAGE}
                       alt="Profile"
                       className="profile-img"
                       onError={(e) => {
-                        e.target.src = DEFAULT_PROFILE_IMAGE; // Fallback to default image
+                        e.target.src = DEFAULT_PROFILE_IMAGE;
                         console.error("Error loading profile image");
                       }}
                     />
-                  )}
-                </div>
-                {user.isEditing ? (
-                  <input
-                    type="text"
-                    value={user.name}
-                    onChange={(e) =>
-                      handleChange(user._id, "name", e.target.value)
-                    }
-                  />
-                ) : (
+                  </div>
                   <p>{user.name}</p>
-                )}
-                {user.isEditing ? (
-                  <input
-                    type="email"
-                    value={user.email}
-                    onChange={(e) =>
-                      handleChange(user._id, "email", e.target.value)
-                    }
-                  />
-                ) : (
                   <p>{user.email}</p>
-                )}
-                {user.isEditing ? (
-                  <input
-                    type="text"
-                    value={user.password || "*****"}
-                    onChange={(e) =>
-                      handleChange(user._id, "password", e.target.value)
-                    }
-                  />
-                ) : (
-                  <p>*****</p> // Changed from displaying actual password to fixed 5 asterisks
-                )}
-
-                <div className="actions" onClick={(e) => e.stopPropagation()}>
-                 
-                  <FaTrash className="delete-icon-a" title="Delete" />
+                  <p>*****</p>
+                  <div className="actions" onClick={(e) => e.stopPropagation()}>
+                    <FaTrash className="delete-icon-a" title="Delete" />
+                  </div>
                 </div>
+              ))
+            ) : (
+              <div className="list-table-format">
+                <p colSpan="6">No users found</p>
               </div>
-            ))}
+            )}
           </div>
         </div>
 
@@ -297,6 +300,12 @@ const UserData = () => {
                   onClick={() => setActiveTab("synopsis")}
                 >
                   Synopsis
+                </button>
+                <button
+                  className={`popup-tab ${activeTab === "messages" ? "active" : ""}`}
+                  onClick={() => setActiveTab("messages")}
+                >
+                  Messages
                 </button>
               </div>
 
@@ -425,6 +434,11 @@ const UserData = () => {
                 <SynopsisSection user={selectedUser} />
               </div>
 
+              {/* Messages Section */}
+              <div className={`popup-content-section ${activeTab === "messages" ? "active" : ""}`}>
+                <MessagesSection user={selectedUser} />
+              </div>
+
             </div>
           </div>
         )}
@@ -480,3 +494,60 @@ const UserData = () => {
 };
 
 export default UserData;
+
+<style>
+{`
+  .messages-list {
+    padding: 20px;
+  }
+
+  .message-item {
+    background: #f5f5f5;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+  }
+
+  .message-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .message-sender {
+    font-weight: bold;
+    color: #333;
+  }
+
+  .message-time {
+    color: #666;
+    font-size: 0.9em;
+  }
+
+  .message-content {
+    margin: 10px 0;
+  }
+
+  .message-email {
+    color: #666;
+    margin-bottom: 5px;
+  }
+
+  .message-text {
+    color: #333;
+    line-height: 1.4;
+  }
+
+  .message-status {
+    font-size: 0.9em;
+    color: #666;
+    margin-top: 5px;
+  }
+
+  .no-data {
+    text-align: center;
+    color: #666;
+    padding: 20px;
+  }
+`}
+</style>
