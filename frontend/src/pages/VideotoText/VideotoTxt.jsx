@@ -8,6 +8,7 @@ function VideoToText() {
   const [convertedText, setConvertedText] = useState('');
   const [isVisible, setIsVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isCopied, setIsCopied] = useState(false); // New state for copy functionality
   const fileInputRef = useRef(null);
 
   const handleMediaUpload = (e) => {
@@ -65,8 +66,17 @@ function VideoToText() {
     fileInputRef.current.value = null;
   };
 
-  const handleDelete = () => {
-    setConvertedText('');
+  const handleCopy = () => {
+    if (convertedText) {
+      navigator.clipboard.writeText(convertedText)
+        .then(() => {
+          setIsCopied(true);
+          setTimeout(() => setIsCopied(false), 1000); // Reset after 1 second
+        })
+        .catch(() => {
+          alert('Failed to copy text');
+        });
+    }
   };
 
   return (
@@ -78,10 +88,15 @@ function VideoToText() {
 
         <div className={`converted-text-section ${isVisible ? 'visible' : ''}`}>
           <h3>Here is the converted text</h3>
+          <button
+            className={`copy-btn ${isCopied ? 'copied' : ''}`}
+            onClick={handleCopy}
+          >
+            {isCopied ? 'Copied!' : 'Copy'}
+          </button>
           {convertedText ? (
             <div className="converted-text">
               <p>{convertedText}</p>
-              <button className="copy-btn" onClick={() => navigator.clipboard.writeText(convertedText)}>Copy</button>
             </div>
           ) : (
             <p>No text converted yet.</p>
@@ -113,9 +128,7 @@ function VideoToText() {
           <button onClick={handleConvert} className="convert-btn" disabled={!media || isLoading}>
             {isLoading ? "Converting..." : "Convert"}
           </button>
-          <button onClick={handleDelete} className="delete-btn" disabled={!convertedText}>
-            Delete
-          </button>
+
           <button onClick={handleClear} className="clear-btn" disabled={!media && !convertedText}>
             Clear
           </button>

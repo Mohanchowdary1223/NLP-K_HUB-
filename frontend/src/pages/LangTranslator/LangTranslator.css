@@ -67,6 +67,7 @@
   margin-bottom: 20px;
 }
 
+
 /* Text input area */
 .text-input {
   width: 45%;
@@ -107,7 +108,8 @@
 
 /* Button styles */
 .translate-button,
-.clear-button {
+.clear-button,
+.copy-button{
   padding: 10px 20px;
   font-size: 18px;
   border: none;
@@ -120,7 +122,8 @@
 }
 
 /* Translate button */
-.translate-button {
+.translate-button,
+.copy-button {
   background-color: #00796b;
 }
 
@@ -130,7 +133,11 @@
 }
 
 /* Button hover effects */
-.translate-button:hover {
+.translate-button:hover
+{
+  background-color: #005f51;
+}
+.copy-button.copied {
   background-color: #005f51;
 }
 

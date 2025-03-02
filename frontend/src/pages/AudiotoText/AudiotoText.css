@@ -18,7 +18,10 @@
 .audio-area.moved {
   transform: translateX(200px);
 }
-
+.copy-btn.copied {
+  background-color: #005f51; /* Change button color when copied */
+  color: white; /* Optional: Change text color */
+}
 /* Record button styling */
 .record-button {
   position: absolute;

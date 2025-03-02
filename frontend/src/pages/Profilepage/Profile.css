@@ -164,6 +164,12 @@
   /* Space below the icon */
 }
 
+.card-icon1 {
+  width: 60px;
+  margin-bottom: 10px;
+  /* Space below the icon */
+}
+
 .upload-count {
   font-size: 14px;
   /* Size for upload count */
@@ -616,6 +622,10 @@
   .card-icon {
     width: 40px;
   }
+  .card-icon1 {
+    width: 50px;
+  }
+
 
   .popup-items {
     max-height: 350px;
@@ -673,6 +683,10 @@
 
   .card-icon {
     width: 35px;
+  }
+
+  .card-icon1 {
+    width: 45px;
   }
 
   .upload-count {

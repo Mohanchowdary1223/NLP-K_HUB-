@@ -88,8 +88,7 @@ input[type="file"] {
   transform: translateX(200px); /* Move buttons to the right when visible */
 }
 
-.clear-btn,
-.delete-btn {
+.clear-btn{
   background-color: #2dc5b8;
   color: white;
   padding: 12px 20px;
@@ -100,8 +99,7 @@ input[type="file"] {
   transition: background-color 0.3s;
 }
 
-.clear-btn:hover,
-.delete-btn:hover {
+.clear-btn:hover {
   background-color: #26b0a4;
 }
 
@@ -175,6 +173,14 @@ input[type="file"] {
 
 .copy-btn:hover {
   background-color: #006666;
+}
+
+.model-selection{
+  padding-bottom: 10px;
+}
+.copy-btn.copied {
+  background-color: #005f51; /* Change button color when copied */
+  color: white; /* Optional: Change text color */
 }
 
 .convert-btn {

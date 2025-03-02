@@ -84,9 +84,7 @@ function VideoToText() {
     setIsVisible(false);
   };
 
-  const handleDelete = () => {
-    setConvertedText('');
-  };
+
 
   return (
     <div>
@@ -147,7 +145,6 @@ function VideoToText() {
         {/* Buttons */}
         <div className={`buttons ${isVisible ? 'moved' : ''}`}>
           <button onClick={handleConvert} className="convert-btn">Convert</button>
-          <button onClick={handleDelete} className="delete-btn">Delete</button>
           <button onClick={handleClear} className="clear-btn">Clear</button>
         </div>
       </div>

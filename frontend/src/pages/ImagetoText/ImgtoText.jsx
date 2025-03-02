@@ -8,6 +8,7 @@ function ImageToText() {
     const [isVisible, setIsVisible] = useState(false);
     const [loading, setLoading] = useState(false);
     const [model, setModel] = useState('simple'); // New state for model selection
+    const [isCopied, setIsCopied] = useState(false); // New state for copy functionality
     const fileInputRef = useRef(null);
 
     const handleImageUpload = (e) => {
@@ -67,8 +68,17 @@ function ImageToText() {
         setIsVisible(false);
     };
 
-    const handleDelete = () => {
-        setConvertedText('');
+    const handleCopy = () => {
+        if (convertedText) {
+            navigator.clipboard.writeText(convertedText)
+                .then(() => {
+                    setIsCopied(true);
+                    setTimeout(() => setIsCopied(false), 1000); // Reset after 1 second
+                })
+                .catch(() => {
+                    alert('Failed to copy text');
+                });
+        }
     };
 
     return (
@@ -91,17 +101,15 @@ function ImageToText() {
                 {/* Converted Text Section */}
                 <div className={`converted-text-section ${isVisible ? 'visible' : ''}`}>
                     <h3>Here is the converted text</h3>
-                    <button 
-                         className="copy-btn"
-                         onClick={() => navigator.clipboard.writeText(convertedText)}
-                     >
-                         Copy
-                     </button>
+                    <button
+                        className={`copy-btn ${isCopied ? 'copied' : ''}`}
+                        onClick={handleCopy}
+                    >
+                        {isCopied ? 'Copied!' : 'Copy'}
+                    </button>
                     {convertedText ? (
-                         
                         <div className="converted-text">
                             <p>{convertedText}</p>
-                           
                         </div>
                     ) : (
                         <p>No text converted yet.</p>
@@ -132,7 +140,6 @@ function ImageToText() {
                 {/* Buttons */}
                 <div className={`buttons ${isVisible ? 'moved' : ''}`}>
                     <button onClick={handleConvert} className="convert-btn">Convert</button>
-                    <button onClick={handleDelete} className="delete-btn">Delete</button>
                     <button onClick={handleClear} className="clear-btn">Clear</button>
                 </div>
             </div>

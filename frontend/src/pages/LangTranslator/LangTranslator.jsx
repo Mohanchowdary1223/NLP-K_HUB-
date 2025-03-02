@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import './LangTranslator.css';
-import { FaExchangeAlt, FaTrash, FaCheck } from 'react-icons/fa';
+import { FaExchangeAlt, FaTrash, FaCheck, FaCopy } from 'react-icons/fa';
 import Navbar from '../../components/Navbar/Navbar';
 import axios from 'axios';
 
@@ -9,6 +9,7 @@ function LangTranslator() {
   const [translatedText, setTranslatedText] = useState('');
   const [sourceLang, setSourceLang] = useState('en'); // Default to English
   const [targetLang, setTargetLang] = useState('te'); // Default to Telugu
+  const [isCopied, setIsCopied] = useState(false);
 
   const handleTranslate = async () => {
     if (!text.trim()) {
@@ -42,6 +43,19 @@ function LangTranslator() {
   const clearText = () => {
     setText('');
     setTranslatedText('');
+  };
+
+  const handleCopy = () => {
+    if (translatedText) {
+      navigator.clipboard.writeText(translatedText)
+        .then(() => {
+          setIsCopied(true);
+          setTimeout(() => setIsCopied(false), 1000); // Reset after 1 second
+        })
+        .catch(() => {
+          alert('Failed to copy text');
+        });
+    }
   };
 
   return (
@@ -173,6 +187,9 @@ function LangTranslator() {
           </button>
           <button className="clear-button" onClick={clearText}>
             <FaTrash /> Clear
+          </button>
+          <button className={`copy-button ${isCopied ? 'copied' : ''}`} onClick={handleCopy}>
+            <FaCopy /> {isCopied ? 'Copied!' : 'Copy'}
           </button>
         </div>
       </div>

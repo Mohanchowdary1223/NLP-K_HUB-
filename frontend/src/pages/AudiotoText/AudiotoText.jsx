@@ -11,6 +11,7 @@ function AudioToText() {
     const [loading, setLoading] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
     const [targetLanguage, setTargetLanguage] = useState('en'); // Default language: English
+    const [isCopied, setIsCopied] = useState(false); // New state for copy functionality
     const fileInputRef = useRef(null);
 
     const handleAudioUpload = (e) => {
@@ -88,7 +89,6 @@ function AudioToText() {
         }
     };
 
-
     const handleClear = () => {
         setAudio(null);
         setConvertedText('');
@@ -97,11 +97,17 @@ function AudioToText() {
         setIsVisible(false);
     };
 
-    const handleDelete = () => {
-        setConvertedText('');
-        setClassifiedData({});
-        setTranslatedText('');
-        setIsVisible(false);
+    const handleCopy = () => {
+        if (convertedText) {
+            navigator.clipboard.writeText(convertedText)
+                .then(() => {
+                    setIsCopied(true);
+                    setTimeout(() => setIsCopied(false), 1000); // Reset after 1 second
+                })
+                .catch(() => {
+                    alert('Failed to copy text');
+                });
+        }
     };
 
     return (
@@ -114,11 +120,16 @@ function AudioToText() {
                 {/* Converted Text Section */}
                 <div className={`converted-text-section ${isVisible ? 'visible' : ''}`}>
                     <h3>Here is the converted text</h3>
+                    <button
+                        className={`copy-btn ${isCopied ? 'copied' : ''}`}
+                        onClick={handleCopy}
+                    >
+                        {isCopied ? 'Copied!' : 'Copy'}
+                    </button>
                     {convertedText ? (
                         <div className="converted-text">
                             <p>{convertedText}</p>
                             <div>
-                                <h4>Classified Data:</h4>
                                 <ul>
                                     {Object.entries(classifiedData).map(([category, text]) => (
                                         <li key={category}>
@@ -127,12 +138,6 @@ function AudioToText() {
                                     ))}
                                 </ul>
                             </div>
-                            <button
-                                className="copy-btn"
-                                onClick={() => navigator.clipboard.writeText(convertedText)}
-                            >
-                                Copy
-                            </button>
                         </div>
                     ) : (
                         <p>No text converted yet.</p>
@@ -162,9 +167,7 @@ function AudioToText() {
                     <button onClick={handleLiveRecording} className="live-record-btn" disabled={isRecording}>
                         {isRecording ? 'Recording...' : 'Record Live Audio'}
                     </button>
-                    <button onClick={handleDelete} className="delete-btn">
-                        Delete
-                    </button>
+
                     <button onClick={handleClear} className="clear-btn">
                         Clear
                     </button>
@@ -172,7 +175,6 @@ function AudioToText() {
             </div>
         </div>
     );
-
 }
 
 export default AudioToText;
