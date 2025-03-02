@@ -547,8 +547,8 @@ def generate_unique_filename(filename):
 
 @app.route('/submit-contact', methods=['POST', 'OPTIONS'])
 def submit_contact():
-    # Handle preflight request
     if request.method == 'OPTIONS':
+        # Handle preflight request
         response = make_response()
         response.headers.add("Access-Control-Allow-Origin", "http://localhost:5173")
         response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
@@ -557,29 +557,33 @@ def submit_contact():
         return response, 200
 
     try:
-        # Connect to the NLP_SIGN database and get or create the 'interested customer' collection
-        db = client['NLP_SIGN']
-        interested_customer_collection = db['interested customer']
-
-        # Get JSON data from the frontend
         data = request.json
         name = data.get('name')
-        email = data.get('email')
+        contact_email = data.get('contact_email')  # Get the contact email
         message = data.get('message')
 
-        # Validate input fields
-        if not name or not email or not message:
-            return jsonify({"error": "All fields are required"}), 400
+        if not name or not message:
+            return jsonify({"error": "Name and message are required"}), 400
 
-        # Save the data into the collection
-        interested_customer_collection.insert_one({
+        # Get the currently logged-in user's email from the session
+        current_user_email = current_user.email if current_user.is_authenticated else None
+        
+        if not current_user_email:
+            return jsonify({"error": "User not authenticated"}), 401
+
+        # Save message data with both emails
+        message_data = {
             "name": name,
-            "email": email,
+            "user_email": current_user_email,  # Store the logged-in user's email
+            "contact_email": contact_email,    # Store the contact email
             "message": message,
-            "timestamp": time.time()
-        })
+            "timestamp": time.time(),
+            "status": "unread"  # Add a status field for message tracking
+        }
+        
+        # Store in interested_customer collection
+        db['interested customer'].insert_one(message_data)
 
-        # Success response
         response = jsonify({"message": "Contact information submitted successfully"})
         response.headers.add("Access-Control-Allow-Origin", "http://localhost:5173")
         response.headers.add("Access-Control-Allow-Credentials", "true")
@@ -621,12 +625,17 @@ def record_audio_endpoint():
 @app.route('/admin-users', methods=['GET'])
 def admin_users_data():
     try:
-        users = list(users_collection.find())
+        # Fetch all users from the database
+        users = list(users_collection.find({}, {
+            'password': 0  # Exclude password from the response
+        }))
         user_list = []
         
         for user in users:
             email = user.get('email', '')
-            
+            if not email:
+                continue  # Skip users without email
+                
             # Get media files from MongoDB with content_type
             images = list(multimedia_collection.find(
                 {'email': email, 'type': 'image'},
@@ -649,33 +658,68 @@ def admin_users_data():
 
             documentation = list(multimedia_collection.find(
                 {'email': email, 'type': 'documentation'},
-                {'_id': 0, 'file_id': 1, 'filename': 1, 'extracted_text': 1, 'timestamp': 1, 'content_type': 1}
+                {'_id': 0, 'file_id': 1, 'filename': 1, 'extracted_text': 1, 'summary': 1, 'timestamp': 1, 'content_type': 1}
             ))
+            
+            # Add debug logging
+            print(f"Documentation for user {email}:", documentation)
+            for doc in documentation:
+                print(f"Document details - filename: {doc.get('filename')}")
+                print(f"Summary: {doc.get('summary')}")
+                print(f"Extracted text: {doc.get('extracted_text')}")
 
             # Convert ObjectId to string
             for media in images + videos + audios:
                 if isinstance(media.get('file_id'), ObjectId):
                     media['file_id'] = str(media['file_id'])
 
+            # Explicitly log the query parameters for messages
+            print(f"Searching for messages with email: {email}")
+            
+            # Get user messages from interested_customer collection
+            messages = list(db['interested customer'].find(
+                {'user_email': email},  # Make sure this matches how you store the email in contact form
+                {
+                    '_id': 0,
+                    'name': 1,
+                    'user_email': 1,
+                    'contact_email': 1,  # Include contact_email
+                    'message': 1,
+                    'timestamp': 1,
+                    'status': 1  # Include status field
+                }
+            ))
+            
+            # Debug log for messages
+            print(f"Found {len(messages)} messages for user {email}")
+            print("Messages:", messages)
+
             user_data = {
                 '_id': str(user.get('_id')),
                 'name': user.get('name', 'Unknown'),
                 'email': email,
-                'password': user.get('password', '********'),
                 'profile_image': user.get('profile_image'),
                 'images': images,
                 'videos': videos,
                 'audios': audios,
                 'translations': translations,
+                'documentation': documentation,
+                'messages': messages,
                 'image_count': len(images),
                 'video_count': len(videos),
                 'audio_count': len(audios),
                 'translation_count': len(translations),
-                'documentation': documentation,
-                'documentation_count': len(documentation)
+                'documentation_count': len(documentation),
+                'message_count': len(messages)
             }
+            
+            # Log the full user_data object
+            print(f"User data being sent for {email}:", user_data)
+            
             user_list.append(user_data)
 
+        # Debug log entire response
+        print("Full response:", user_list)
         return jsonify(user_list), 200
 
     except Exception as e:
