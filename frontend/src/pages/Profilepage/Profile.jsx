@@ -51,6 +51,15 @@ function ProfileCard() {
     documentation: [],
   });
 
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [selectedItems, setSelectedItems] = useState({
+    images: [],
+    videos: [],
+    audios: [],
+    translations: [],
+    documentation: []
+  });
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -150,7 +159,17 @@ function ProfileCard() {
   };
 
   const handleEditClick = () => {
-    setIsEditing(!isEditing);
+    if (isEditMode) {
+      // Reset selections when canceling
+      setSelectedItems({
+        images: [],
+        videos: [],
+        audios: [],
+        translations: [],
+        documentation: []
+      });
+    }
+    setIsEditMode(!isEditMode);
   };
 
   const handleInputChange = (e) => {
@@ -191,6 +210,21 @@ function ProfileCard() {
   // Add new function to handle media view
   const handleMediaView = (mediaType) => {
     setActiveCard(mediaType);
+  };
+
+  const handleItemSelect = (type, id) => {
+    setSelectedItems(prev => ({
+      ...prev,
+      [type]: prev[type].includes(id)
+        ? prev[type].filter(item => item !== id)
+        : [...prev[type], id]
+    }));
+  };
+
+  // Add function to handle deletion of selected items
+  const handleDeleteSelected = (type) => {
+    // TODO: Implement deletion logic here
+    console.log(`Deleting selected ${type}:`, selectedItems[type]);
   };
 
   const DEFAULT_PROFILE_IMAGE =
@@ -343,7 +377,11 @@ function ProfileCard() {
             <div className="media-list">
               {mediaData.images.length > 0 ? (
                 mediaData.images.map((image) => (
-                  <div key={image.file_id} className="media-item">
+                  <div 
+                    key={image.file_id} 
+                    className={`media-item ${isEditMode && selectedItems.images.includes(image.file_id) ? 'selected' : ''}`}
+                    onClick={() => isEditMode && handleItemSelect('images', image.file_id)}
+                  >
                     <img
                       src={`http://localhost:5000/media/file/${image.file_id}`}
                       alt={image.filename}
@@ -363,7 +401,20 @@ function ProfileCard() {
                 <p>No image history found.</p>
               )}
             </div>
-            <button className="delete-all-btn">Delete All Image History</button>
+            <div className="btn-div-profile">
+              <button 
+                className="delete-all-btn"
+                onClick={() => isEditMode ? handleDeleteSelected('images') : null}
+              >
+                {isEditMode ? 'Delete Selected' : 'Delete All Image History'}
+              </button>
+              <button 
+                className="delete-all-btn1"
+                onClick={handleEditClick}
+              >
+                {isEditMode ? 'Cancel' : 'Edit'}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -380,7 +431,11 @@ function ProfileCard() {
                 mediaData.videos
                   .filter((video) => video.source !== "documentation")
                   .map((video) => (
-                    <div key={video.file_id} className="media-item">
+                    <div 
+                      key={video.file_id} 
+                      className={`media-item ${isEditMode && selectedItems.videos.includes(video.file_id) ? 'selected' : ''}`}
+                      onClick={() => isEditMode && handleItemSelect('videos', video.file_id)}
+                    >
                       <video controls className="media-thumbnail">
                         <source
                           src={`http://localhost:5000/media/file/${video.file_id}`}
@@ -398,7 +453,20 @@ function ProfileCard() {
                 <p>No video history found.</p>
               )}
             </div>
-            <button className="delete-all-btn">Delete All video History</button>
+            <div className="btn-div-profile">
+              <button 
+                className="delete-all-btn"
+                onClick={() => isEditMode ? handleDeleteSelected('videos') : null}
+              >
+                {isEditMode ? 'Delete Selected' : 'Delete All Video History'}
+              </button>
+              <button 
+                className="delete-all-btn1"
+                onClick={handleEditClick}
+              >
+                {isEditMode ? 'Cancel' : 'Edit'}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -413,7 +481,11 @@ function ProfileCard() {
             <div className="media-list">
               {mediaData.audios.length > 0 ? (
                 mediaData.audios.map((audio) => (
-                  <div key={audio.file_id} className="media-item">
+                  <div 
+                    key={audio.file_id} 
+                    className={`media-item ${isEditMode && selectedItems.audios.includes(audio.file_id) ? 'selected' : ''}`}
+                    onClick={() => isEditMode && handleItemSelect('audios', audio.file_id)}
+                  >
                     <audio controls className="media-player">
                       <source
                         src={`http://localhost:5000/media/file/${audio.file_id}`}
@@ -431,7 +503,20 @@ function ProfileCard() {
                 <p>No audio history found.</p>
               )}
             </div>
-            <button className="delete-all-btn">Delete All History</button>
+            <div className="btn-div-profile">
+              <button 
+                className="delete-all-btn"
+                onClick={() => isEditMode ? handleDeleteSelected('audios') : null}
+              >
+                {isEditMode ? 'Delete Selected' : 'Delete All Audio History'}
+              </button>
+              <button 
+                className="delete-all-btn1"
+                onClick={handleEditClick}
+              >
+                {isEditMode ? 'Cancel' : 'Edit'}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -446,7 +531,11 @@ function ProfileCard() {
             <div className="media-list">
               {mediaList.length > 0 ? (
                 mediaList.map((item, index) => (
-                  <div key={index} className="media-item">
+                  <div 
+                    key={index} 
+                    className={`media-item ${isEditMode && selectedItems.translations.includes(index) ? 'selected' : ''}`}
+                    onClick={() => isEditMode && handleItemSelect('translations', index)}
+                  >
                     <p>Original Text: {item.original_text}</p>
                     <p>Translated Text: {item.translated_text}</p>
                   </div>
@@ -455,7 +544,20 @@ function ProfileCard() {
                 <p>No history found.</p>
               )}
             </div>
-            <button className="delete-all-btn">Delete All Translation History</button>
+            <div className="btn-div-profile">
+              <button 
+                className="delete-all-btn"
+                onClick={() => isEditMode ? handleDeleteSelected('translations') : null}
+              >
+                {isEditMode ? 'Delete Selected' : 'Delete All Translation History'}
+              </button>
+              <button 
+                className="delete-all-btn1"
+                onClick={handleEditClick}
+              >
+                {isEditMode ? 'Cancel' : 'Edit'}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -470,7 +572,11 @@ function ProfileCard() {
             <div className="media-list">
               {mediaData.documentation && mediaData.documentation.length > 0 ? (
                 mediaData.documentation.map((doc) => (
-                  <div key={doc.file_id} className="media-item">
+                  <div 
+                    key={doc.file_id} 
+                    className={`media-item ${isEditMode && selectedItems.documentation.includes(doc.file_id) ? 'selected' : ''}`}
+                    onClick={() => isEditMode && handleItemSelect('documentation', doc.file_id)}
+                  >
                     <div className="media-content">
                       <h3>{doc.filename}</h3>
                       <div className="summary-content">
@@ -500,9 +606,6 @@ function ProfileCard() {
                           {new Date(doc.timestamp * 1000).toLocaleString()}
                         </p>
                       </div>
-                      <button className="delete-all-btn">
-                        Delete All Synopsis History
-                      </button>
                     </div>
                   </div>
                 ))
@@ -510,9 +613,24 @@ function ProfileCard() {
                 <p>No synopsis history found.</p>
               )}
             </div>
+            <div className="btn-div-profile">
+              <button 
+                className="delete-all-btn"
+                onClick={() => isEditMode ? handleDeleteSelected('documentation') : null}
+              >
+                {isEditMode ? 'Delete Selected' : 'Delete All Synopsis History'}
+              </button>
+              <button 
+                className="delete-all-btn1"
+                onClick={handleEditClick}
+              >
+                {isEditMode ? 'Cancel' : 'Edit'}
+              </button>
+            </div>
           </div>
         </div>
       )}
+      
     </div>
   );
 }

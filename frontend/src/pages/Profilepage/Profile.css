@@ -380,6 +380,8 @@
   /* Rounded scrollbar edges */
 }
 
+
+
 .popup-items::-webkit-scrollbar-thumb:hover {
   background: #001a50;
   /* Darker scrollbar color on hover */
@@ -418,6 +420,13 @@
   cursor: pointer;
 }
 
+.btn-div-profile {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+  gap: 10px;
+}
+
 .delete-all-btn {
   background-color: #d9534f;
   color: white;
@@ -425,13 +434,27 @@
   padding: 10px 20px;
   border-radius: 4px;
   cursor: pointer;
-  width: 100%;
+  width: 50%;
+  margin-top: 20px;
+  font-size: 16px;
+}
+.delete-all-btn1 {
+  background-color: #006666;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 50%;
   margin-top: 20px;
   font-size: 16px;
 }
 
 .delete-all-btn:hover {
   background-color: #c9302c;
+}
+.delete-all-btn1:hover {
+  background-color: #004d4d;
 }
 
 @media (min-width: 1440px) {
@@ -1060,3 +1083,23 @@
 }
 
 /* ...existing code... */
+
+.media-item.selected {
+  border: 2px solid #007bff;
+  background-color: rgba(0, 123, 255, 0.1);
+}
+
+.media-item {
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.media-item:hover {
+  transform: scale(1.02);
+}
+
+/* Style for disabled delete button */
+.delete-all-btn[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

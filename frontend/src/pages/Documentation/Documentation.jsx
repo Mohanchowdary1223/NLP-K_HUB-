@@ -9,6 +9,7 @@ function VideoToText() {
   const [convertedText, setConvertedText] = useState('');
   const [isVisible, setIsVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isCopied, setIsCopied] = useState(false); // New state for copy functionality
   const fileInputRef = useRef(null);
 
   const handleMediaUpload = (e) => {
@@ -84,7 +85,18 @@ function VideoToText() {
     setIsVisible(false);
   };
 
-
+  const handleCopy = () => {
+    if (convertedText) {
+      navigator.clipboard.writeText(convertedText)
+        .then(() => {
+          setIsCopied(true);
+          setTimeout(() => setIsCopied(false), 1000); // Reset after 1 second
+        })
+        .catch(() => {
+          alert('Failed to copy text');
+        });
+    }
+  };
 
   return (
     <div>
@@ -95,19 +107,18 @@ function VideoToText() {
         {/* Converted Text Section */}
         <div className={`converted-text-section ${isVisible ? 'visible' : ''}`}>
           <h3>KEY NOTES.</h3>
-          <button 
-                  className="copy-btn"
-                  onClick={() => navigator.clipboard.writeText(convertedText)}
-                >
-                  Copy
-                </button>
+          <button
+            className={`copy-btn ${isCopied ? 'copied' : ''}`}
+            onClick={handleCopy}
+          >
+            {isCopied ? 'Copied!' : 'Copy'}
+          </button>
           {isLoading ? (
             <p>Processing...</p>
           ) : (
             convertedText ? (
               <div className="converted-text">
                 <p>{convertedText}</p>
-
               </div>
             ) : (
               <p>No text converted yet.</p>

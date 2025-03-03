@@ -6,6 +6,15 @@
     display: flex;
     justify-content: center; /* Center the course items horizontally */
   }
+
+  .copy-btn:hover {
+    background-color: #006666;
+  }
+  
+  .copy-btn.copied {
+    background-color: #005f51; /* Change button color when copied */
+    color: white; /* Optional: Change text color */
+  }
   
   .course-bar ul {
     display: flex;
