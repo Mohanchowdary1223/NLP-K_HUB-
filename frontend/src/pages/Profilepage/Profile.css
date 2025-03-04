@@ -152,10 +152,17 @@
   /* Rounded corners */
   padding: 30px;
   /* Increased padding inside the card */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
   /* Shadow effect */
   min-height: 150px;
+  cursor: pointer;
   /* Increased minimum height */
+}
+
+.card:hover{
+  transform: scale(1.03);
+  background-color: #ebe9e9;
+
 }
 
 .card-icon {
