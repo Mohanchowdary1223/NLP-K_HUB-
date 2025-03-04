@@ -536,8 +536,18 @@ def get_audios():
 @app.route('/uploads/translations', methods=['GET'])
 @login_required
 def get_translations():
-    translations = list(translations_collection.find({}, {"_id": 0, "original_text": 1, "translated_text": 1}))
+    # Include _id field and convert it to string
+    translations = list(translations_collection.find(
+        {'email': current_user.email},
+        {"_id": 1, "original_text": 1, "translated_text": 1, "timestamp": 1}
+    ))
+    
+    # Convert ObjectId to string for each translation
+    for translation in translations:
+        translation['_id'] = str(translation['_id'])
+    
     return jsonify(translations)
+
 #@app.route('/uploads/<filename>', methods=['GET'])
 #def serve_file(filename):
  #   return send_from_directory(UPLOAD_FOLDER, filename)
@@ -956,42 +966,125 @@ def get_summary(doc_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/translations/move-to-trash', methods=['POST'])
+@login_required
+def move_translations_to_trash():
+    try:
+        data = request.json
+        translation_ids = data.get('translation_ids', [])
+        
+        if not translation_ids:
+            return jsonify({'error': 'No translations selected'}), 400
+
+        # Find translations before deleting
+        translations = list(translations_collection.find({
+            'email': current_user.email,
+            '_id': {'$in': [ObjectId(id) for id in translation_ids]}
+        }))
+
+        if not translations:
+            return jsonify({'error': 'No translations found'}), 404
+
+        # Convert ObjectId to string for each translation
+        for translation in translations:
+            translation['_id'] = str(translation['_id'])
+
+        # Add to trash collection
+        trash_documents = [{
+            **translation,
+            'deleted_at': time.time(),
+            'original_collection': 'translations'
+        } for translation in translations]
+        
+        trash_collection.insert_many(trash_documents)
+
+        # Remove from translations collection
+        result = translations_collection.delete_many({
+            'email': current_user.email,
+            '_id': {'$in': [ObjectId(id) for id in translation_ids]}
+        })
+
+        return jsonify({
+            'message': f'Successfully moved {result.deleted_count} translations to trash',
+            'count': result.deleted_count
+        }), 200
+
+    except Exception as e:
+        print(f"Error moving translations to trash: {e}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/move-to-trash', methods=['POST'])
 @login_required
 def move_to_trash():
     try:
         data = request.json
-        file_ids = data.get('file_ids', [])
-        collection_type = data.get('type')  # 'documentation', 'images', etc.
+        items = data.get('items', {})
         
-        # Find the documents to move
-        documents = list(multimedia_collection.find({
-            'email': current_user.email,
-            'file_id': {'$in': file_ids}
-        }))
-        
-        if documents:
-            # Add to trash collection with timestamp
-            trash_documents = [{
-                **doc,
-                'deleted_at': time.time(),
-                'original_collection': collection_type
-            } for doc in documents]
-            
-            trash_collection.insert_many(trash_documents)
-            
-            # Remove from original collection
-            multimedia_collection.delete_many({
+        total_moved = 0
+        results = {}
+
+        print("Received items to delete:", items)  # Debug log
+
+        # Handle translations
+        if items.get('translations'):
+            # Fixed the syntax error in the ObjectId list comprehension
+            translations = list(translations_collection.find({
                 'email': current_user.email,
-                'file_id': {'$in': file_ids}
-            })
+                '_id': {'$in': [ObjectId(id) for id in items['translations']]}  # Fixed closing bracket position
+            }))
             
-            return jsonify({'message': f'Successfully moved {len(documents)} items to trash'}), 200
+            if translations:
+                for translation in translations:
+                    translation['_id'] = str(translation['_id'])
+                    translation['original_collection'] = 'translations'
+                    translation['deleted_at'] = time.time()
+                
+                trash_collection.insert_many(translations)
+                result = translations_collection.delete_many({
+                    'email': current_user.email,
+                    '_id': {'$in': [ObjectId(id) for id in items['translations']]}
+                }
+                )
+                total_moved += result.deleted_count
+                results['translations'] = result.deleted_count
+
+        # Handle multimedia (images, videos, audios, documentation)
+        for media_type in ['images', 'videos', 'audios', 'documentation']:
+            if items.get(media_type):
+                documents = list(multimedia_collection.find({
+                    'email': current_user.email,
+                    'file_id': {'$in': items[media_type]}
+                }))
+                
+                if documents:
+                    trash_items = []
+                    for doc in documents:
+                        doc['_id'] = str(doc['_id'])
+                        doc['original_collection'] = media_type
+                        doc['deleted_at'] = time.time()
+                        trash_items.append(doc)
+                    
+                    if trash_items:
+                        trash_collection.insert_many(trash_items)
+                        result = multimedia_collection.delete_many({
+                            'email': current_user.email,
+                            'file_id': {'$in': items[media_type]}
+                        })
+                        total_moved += result.deleted_count
+                        results[media_type] = result.deleted_count
+
+        print("Results of deletion:", results)  # Debug log
+
+        if total_moved > 0:
+            return jsonify({
+                'message': f'Successfully moved {total_moved} items to trash',
+                'details': results
+            }), 200
         
-        return jsonify({'message': 'No documents found to move'}), 404
+        return jsonify({'message': 'No items found to move'}), 404
 
     except Exception as e:
-        print(f"Error moving to trash: {e}")
+        print(f"Error moving items to trash: {e}")
         return jsonify({'error': str(e)}), 500
 
 @app.errorhandler(500)

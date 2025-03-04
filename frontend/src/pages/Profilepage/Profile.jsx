@@ -223,52 +223,74 @@ function ProfileCard() {
   };
 
   // Update handleDeleteSelected function
-  const handleDeleteSelected = async (type) => {
-    try {
-      const itemsToDelete = selectedItems[type];
-      if (itemsToDelete.length === 0) {
-        console.log('No items selected');
-        return;
-      }
+const handleDeleteSelected = async () => {
+  try {
+    // Gather all selected items by type
+    const itemsToDelete = {
+      images: selectedItems.images,
+      videos: selectedItems.videos,
+      audios: selectedItems.audios,
+      translations: selectedItems.translations,
+      documentation: selectedItems.documentation
+    };
 
-      // Call backend to move items to trash
-      const response = await axios.post(
-        'http://localhost:5000/move-to-trash',
-        {
-          file_ids: itemsToDelete,
-          type: type
-        },
-        {
-          withCredentials: true
-        }
+    // Check if any items are selected
+    const hasSelectedItems = Object.values(itemsToDelete)
+      .some(items => items && items.length > 0);
+
+    if (!hasSelectedItems) {
+      console.log('No items selected');
+      return;
+    }
+
+    console.log('Sending items to delete:', itemsToDelete);
+
+    const response = await axios.post(
+      'http://localhost:5000/move-to-trash',
+      { items: itemsToDelete },
+      { withCredentials: true }
+    );
+
+    if (response.status === 200) {
+      // Update all media states
+      setMediaData(prevData => ({
+        images: prevData.images.filter(img => !selectedItems.images.includes(img.file_id)),
+        videos: prevData.videos.filter(vid => !selectedItems.videos.includes(vid.file_id)),
+        audios: prevData.audios.filter(aud => !selectedItems.audios.includes(aud.file_id)),
+        documentation: prevData.documentation.filter(doc => !selectedItems.documentation.includes(doc.file_id))
+      }));
+
+      // Update translations list
+      setMediaList(prevList => 
+        prevList.filter(item => !selectedItems.translations.includes(item._id))
       );
 
-      if (response.status === 200) {
-        // Update local state to remove moved items
-        setMediaData(prev => ({
-          ...prev,
-          [type]: prev[type].filter(item => !itemsToDelete.includes(item.file_id))
-        }));
+      // Reset all selected items
+      setSelectedItems({
+        images: [],
+        videos: [],
+        audios: [],
+        translations: [],
+        documentation: []
+      });
 
-        // Reset selected items
-        setSelectedItems(prev => ({
-          ...prev,
-          [type]: []
-        }));
+      // Update upload counts
+      setUploadCounts(prev => ({
+        ...prev,
+        imageUploads: prev.imageUploads - (selectedItems.images.length || 0),
+        videoUploads: prev.videoUploads - (selectedItems.videos.length || 0),
+        audioUploads: prev.audioUploads - (selectedItems.audios.length || 0),
+        langTranslator: prev.langTranslator - (selectedItems.translations.length || 0),
+        documentationUploads: prev.documentationUploads - (selectedItems.documentation.length || 0),
+      }));
 
-        // Update upload counts
-        setUploadCounts(prev => ({
-          ...prev,
-          [`${type}Uploads`]: prev[`${type}Uploads`] - itemsToDelete.length
-        }));
-
-        // Exit edit mode
-        setIsEditMode(false);
-      }
-    } catch (error) {
-      console.error('Error moving items to trash:', error);
+      // Exit edit mode
+      setIsEditMode(false);
     }
-  };
+  } catch (error) {
+    console.error('Error moving items to trash:', error);
+  }
+};
 
   const DEFAULT_PROFILE_IMAGE =
     "https://cdn-icons-png.flaticon.com/512/149/149071.png";
@@ -455,9 +477,10 @@ function ProfileCard() {
             <div className="btn-div-profile">
               <button 
                 className="delete-all-btn"
-                onClick={() => isEditMode ? handleDeleteSelected('images') : null}
+                onClick={handleDeleteSelected}
+                disabled={!Object.values(selectedItems).some(items => items && items.length > 0)}
               >
-                {isEditMode ? 'Delete Selected' : 'Delete All Image History'}
+                {isEditMode ? 'Delete Selected Items' : 'Delete All'}
               </button>
               <button 
                 className="delete-all-btn1"
@@ -507,9 +530,10 @@ function ProfileCard() {
             <div className="btn-div-profile">
               <button 
                 className="delete-all-btn"
-                onClick={() => isEditMode ? handleDeleteSelected('videos') : null}
+                onClick={handleDeleteSelected}
+                disabled={!Object.values(selectedItems).some(items => items && items.length > 0)}
               >
-                {isEditMode ? 'Delete Selected' : 'Delete All Video History'}
+                {isEditMode ? 'Delete Selected Items' : 'Delete All'}
               </button>
               <button 
                 className="delete-all-btn1"
@@ -557,9 +581,10 @@ function ProfileCard() {
             <div className="btn-div-profile">
               <button 
                 className="delete-all-btn"
-                onClick={() => isEditMode ? handleDeleteSelected('audios') : null}
+                onClick={handleDeleteSelected}
+                disabled={!Object.values(selectedItems).some(items => items && items.length > 0)}
               >
-                {isEditMode ? 'Delete Selected' : 'Delete All Audio History'}
+                {isEditMode ? 'Delete Selected Items' : 'Delete All'}
               </button>
               <button 
                 className="delete-all-btn1"
@@ -572,46 +597,50 @@ function ProfileCard() {
         </div>
       )}
 
-      {activeCard === "langTranslator" && (
-        <div className="popup-overlay">
-          <div className="popup-content">
-            <span className="popup-close" onClick={() => setActiveCard(null)}>
-              <FaTimes />
-            </span>
-            <h2 className="popup-title">Language Translations</h2>
-            <div className="media-list">
-              {mediaList.length > 0 ? (
-                mediaList.map((item, index) => (
-                  <div 
-                    key={index} 
-                    className={`media-item ${isEditMode && selectedItems.translations.includes(index) ? 'selected' : ''}`}
-                    onClick={() => isEditMode && handleItemSelect('translations', index)}
-                  >
-                    <p>Original Text: {item.original_text}</p>
-                    <p>Translated Text: {item.translated_text}</p>
-                  </div>
-                ))
-              ) : (
-                <p>No history found.</p>
-              )}
+{activeCard === "langTranslator" && (
+  <div className="popup-overlay">
+    <div className="popup-content">
+      <span className="popup-close" onClick={() => setActiveCard(null)}>
+        <FaTimes />
+      </span>
+      <h2 className="popup-title">Language Translations</h2>
+      <div className="media-list">
+        {mediaList.length > 0 ? (
+          mediaList.map((item) => (
+            <div 
+              key={item._id} 
+              className={`media-item ${isEditMode && selectedItems.translations.includes(item._id) ? 'selected' : ''}`}
+              onClick={() => isEditMode && handleItemSelect('translations', item._id)}
+            >
+              <p>Original Text: {item.original_text}</p>
+              <p>Translated Text: {item.translated_text}</p>
+              <p className="timestamp">
+                {new Date(item.timestamp * 1000).toLocaleString()}
+              </p>
             </div>
-            <div className="btn-div-profile">
-              <button 
-                className="delete-all-btn"
-                onClick={() => isEditMode ? handleDeleteSelected('translations') : null}
-              >
-                {isEditMode ? 'Delete Selected' : 'Delete All Translation History'}
-              </button>
-              <button 
-                className="delete-all-btn1"
-                onClick={handleEditClick}
-              >
-                {isEditMode ? 'Cancel' : 'Edit'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          ))
+        ) : (
+          <p>No translations found.</p>
+        )}
+      </div>
+      <div className="btn-div-profile">
+        <button 
+          className="delete-all-btn"
+          onClick={handleDeleteSelected}
+          disabled={!Object.values(selectedItems).some(items => items && items.length > 0)}
+        >
+          {isEditMode ? 'Delete Selected Items' : 'Delete All'}
+        </button>
+        <button 
+          className="delete-all-btn1"
+          onClick={handleEditClick}
+        >
+          {isEditMode ? 'Cancel' : 'Edit'}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
       {activeCard === "synopsis" && (
         <div className="popup-overlay">
@@ -667,9 +696,10 @@ function ProfileCard() {
             <div className="btn-div-profile">
               <button 
                 className="delete-all-btn"
-                onClick={() => isEditMode ? handleDeleteSelected('documentation') : null}
+                onClick={handleDeleteSelected}
+                disabled={!Object.values(selectedItems).some(items => items && items.length > 0)}
               >
-                {isEditMode ? 'Delete Selected' : 'Delete All Synopsis History'}
+                {isEditMode ? 'Delete Selected Items' : 'Delete All'}
               </button>
               <button 
                 className="delete-all-btn1"
