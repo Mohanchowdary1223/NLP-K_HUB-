@@ -292,6 +292,69 @@ const handleDeleteSelected = async () => {
   }
 };
 
+// Add this new function after handleDeleteSelected
+const handleDeleteAll = async () => {
+  try {
+    // Determine which type of media to delete based on activeCard
+    let itemsToDelete = {
+      images: [],
+      videos: [],
+      audios: [],
+      translations: [],
+      documentation: []
+    };
+
+    // Fill the appropriate array based on activeCard
+    switch (activeCard) {
+      case 'images':
+        itemsToDelete.images = mediaData.images.map(img => img.file_id);
+        break;
+      case 'videos':
+        itemsToDelete.videos = mediaData.videos.map(vid => vid.file_id);
+        break;
+      case 'audios':
+        itemsToDelete.audios = mediaData.audios.map(aud => aud.file_id);
+        break;
+      case 'langTranslator':
+        itemsToDelete.translations = mediaList.map(item => item._id);
+        break;
+      case 'synopsis':
+        itemsToDelete.documentation = mediaData.documentation.map(doc => doc.file_id);
+        break;
+      default:
+        return;
+    }
+
+    const response = await axios.post(
+      'http://localhost:5000/move-to-trash',
+      { items: itemsToDelete },
+      { withCredentials: true }
+    );
+
+    if (response.status === 200) {
+      // Update states based on which type was deleted
+      if (activeCard === 'images') {
+        setMediaData(prev => ({ ...prev, images: [] }));
+        setUploadCounts(prev => ({ ...prev, imageUploads: 0 }));
+      } else if (activeCard === 'videos') {
+        setMediaData(prev => ({ ...prev, videos: [] }));
+        setUploadCounts(prev => ({ ...prev, videoUploads: 0 }));
+      } else if (activeCard === 'audios') {
+        setMediaData(prev => ({ ...prev, audios: [] }));
+        setUploadCounts(prev => ({ ...prev, audioUploads: 0 }));
+      } else if (activeCard === 'langTranslator') {
+        setMediaList([]);
+        setUploadCounts(prev => ({ ...prev, langTranslator: 0 }));
+      } else if (activeCard === 'synopsis') {
+        setMediaData(prev => ({ ...prev, documentation: [] }));
+        setUploadCounts(prev => ({ ...prev, documentationUploads: 0 }));
+      }
+    }
+  } catch (error) {
+    console.error('Error moving all items to trash:', error);
+  }
+};
+
   const DEFAULT_PROFILE_IMAGE =
     "https://cdn-icons-png.flaticon.com/512/149/149071.png";
   return (
@@ -477,8 +540,8 @@ const handleDeleteSelected = async () => {
             <div className="btn-div-profile">
               <button 
                 className="delete-all-btn"
-                onClick={handleDeleteSelected}
-                disabled={!Object.values(selectedItems).some(items => items && items.length > 0)}
+                onClick={isEditMode ? handleDeleteSelected : handleDeleteAll}
+                disabled={isEditMode && !Object.values(selectedItems).some(items => items && items.length > 0)}
               >
                 {isEditMode ? 'Delete Selected Items' : 'Delete All'}
               </button>
@@ -530,8 +593,8 @@ const handleDeleteSelected = async () => {
             <div className="btn-div-profile">
               <button 
                 className="delete-all-btn"
-                onClick={handleDeleteSelected}
-                disabled={!Object.values(selectedItems).some(items => items && items.length > 0)}
+                onClick={isEditMode ? handleDeleteSelected : handleDeleteAll}
+                disabled={isEditMode && !Object.values(selectedItems).some(items => items && items.length > 0)}
               >
                 {isEditMode ? 'Delete Selected Items' : 'Delete All'}
               </button>
@@ -581,8 +644,8 @@ const handleDeleteSelected = async () => {
             <div className="btn-div-profile">
               <button 
                 className="delete-all-btn"
-                onClick={handleDeleteSelected}
-                disabled={!Object.values(selectedItems).some(items => items && items.length > 0)}
+                onClick={isEditMode ? handleDeleteSelected : handleDeleteAll}
+                disabled={isEditMode && !Object.values(selectedItems).some(items => items && items.length > 0)}
               >
                 {isEditMode ? 'Delete Selected Items' : 'Delete All'}
               </button>
@@ -626,8 +689,8 @@ const handleDeleteSelected = async () => {
       <div className="btn-div-profile">
         <button 
           className="delete-all-btn"
-          onClick={handleDeleteSelected}
-          disabled={!Object.values(selectedItems).some(items => items && items.length > 0)}
+          onClick={isEditMode ? handleDeleteSelected : handleDeleteAll}
+          disabled={isEditMode && !Object.values(selectedItems).some(items => items && items.length > 0)}
         >
           {isEditMode ? 'Delete Selected Items' : 'Delete All'}
         </button>
@@ -696,8 +759,8 @@ const handleDeleteSelected = async () => {
             <div className="btn-div-profile">
               <button 
                 className="delete-all-btn"
-                onClick={handleDeleteSelected}
-                disabled={!Object.values(selectedItems).some(items => items && items.length > 0)}
+                onClick={isEditMode ? handleDeleteSelected : handleDeleteAll}
+                disabled={isEditMode && !Object.values(selectedItems).some(items => items && items.length > 0)}
               >
                 {isEditMode ? 'Delete Selected Items' : 'Delete All'}
               </button>
@@ -723,7 +786,19 @@ const handleDeleteSelected = async () => {
 
             </div>
             <div className="btn-div-profile">
-              <button className="delete-all-btn">Delete All</button>
+              <button 
+                className="delete-all-btn"
+                onClick={isEditMode ? handleDeleteSelected : handleDeleteAll}
+                disabled={isEditMode && !Object.values(selectedItems).some(items => items && items.length > 0)}
+              >
+                {isEditMode ? 'Delete Selected Items' : 'Delete All'}
+              </button>
+              <button 
+                className="delete-all-btn1"
+                onClick={handleEditClick}
+              >
+                {isEditMode ? 'Cancel' : 'Edit'}
+              </button>
             </div>
           </div>
         </div>
