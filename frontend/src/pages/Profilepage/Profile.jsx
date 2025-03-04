@@ -79,6 +79,28 @@ function ProfileCard() {
     documentation: 0
   });
 
+  // Add new state for copy status
+  const [copiedIds, setCopiedIds] = useState(new Set());
+
+  // Add copy handler function
+  const handleCopy = async (text, id) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      // Add ID to copied set
+      setCopiedIds(new Set([...copiedIds, id]));
+      // Remove ID after 2 seconds
+      setTimeout(() => {
+        setCopiedIds(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(id);
+          return newSet;
+        });
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to copy text:', err);
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -398,6 +420,37 @@ const handleDeleteAll = async () => {
   }
 };
 
+// Add this new function after handleDeleteAll
+const handlePermanentDelete = async () => {
+  if (!activeCard || !window.confirm('Are you sure you want to permanently delete all items? This action cannot be undone.')) {
+    return;
+  }
+
+  try {
+    const response = await axios.post(
+      'http://localhost:5000/permanent-delete-trash',
+      { type: activeCard === 'langTranslator' ? 'translations' : activeCard }, // Map 'langTranslator' to 'translations'
+      { withCredentials: true }
+    );
+
+    if (response.status === 200) {
+      // Update trash data
+      setTrashData(prev => ({
+        ...prev,
+        [activeCard === 'langTranslator' ? 'translations' : activeCard]: []
+      }));
+
+      // Update trash counts
+      setTrashCounts(prev => ({
+        ...prev,
+        [activeCard === 'langTranslator' ? 'translations' : activeCard]: 0
+      }));
+    }
+  } catch (error) {
+    console.error('Error performing permanent deletion:', error);
+  }
+};
+
   const DEFAULT_PROFILE_IMAGE =
     "https://cdn-icons-png.flaticon.com/512/149/149071.png";
   return (
@@ -574,6 +627,15 @@ const handleDeleteAll = async () => {
                     <p className="timestamp">
                       {new Date(image.timestamp).toLocaleString()}
                     </p>
+                    <button 
+                      className="copy-bttn-profile"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCopy(image.extracted_text, image.file_id);
+                      }}
+                    >
+                      {copiedIds.has(image.file_id) ? 'Copied!' : 'Copy'}
+                    </button>
                   </div>
                 ))
               ) : (
@@ -627,6 +689,15 @@ const handleDeleteAll = async () => {
                       <p className="timestamp">
                         {new Date(video.timestamp).toLocaleString()}
                       </p>
+                      <button 
+                        className="copy-bttn-profile"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCopy(video.extracted_text, video.file_id);
+                        }}
+                      >
+                        {copiedIds.has(video.file_id) ? 'Copied!' : 'Copy'}
+                      </button>
                     </div>
                   ))
               ) : (
@@ -678,6 +749,15 @@ const handleDeleteAll = async () => {
                     <p className="timestamp">
                       {new Date(audio.timestamp).toLocaleString()}
                     </p>
+                    <button 
+                      className="copy-bttn-profile"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCopy(audio.extracted_text, audio.file_id);
+                      }}
+                    >
+                      {copiedIds.has(audio.file_id) ? 'Copied!' : 'Copy'}
+                    </button>
                   </div>
                 ))
               ) : (
@@ -723,6 +803,15 @@ const handleDeleteAll = async () => {
               <p className="timestamp">
                 {new Date(item.timestamp * 1000).toLocaleString()}
               </p>
+              <button 
+                className="copy-bttn-profile"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCopy(item.translated_text, item._id);
+                }}
+              >
+                {copiedIds.has(item._id) ? 'Copied!' : 'Copy'}
+              </button>
             </div>
           ))
         ) : (
@@ -791,6 +880,15 @@ const handleDeleteAll = async () => {
                         <p className="timestamp">
                           {new Date(doc.timestamp * 1000).toLocaleString()}
                         </p>
+                        <button 
+                          className="copy-bttn-profile"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCopy(doc.summary, doc.file_id);
+                          }}
+                        >
+                          {copiedIds.has(doc.file_id) ? 'Copied!' : 'Copy'}
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -840,8 +938,16 @@ const handleDeleteAll = async () => {
                       <div className="media-details">
                         <p><strong>Filename:</strong> {item.filename}</p>
                         <p><strong>Extracted Text:</strong> {item.extracted_text}</p>
-
                         <p><strong>Deleted on:</strong> {new Date(item.deleted_at * 1000).toLocaleString()}</p>
+                        <button 
+                          className="copy-bttn-profile"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCopy(item.extracted_text, item._id);
+                          }}
+                        >
+                          {copiedIds.has(item._id) ? 'Copied!' : 'Copy'}
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -860,8 +966,16 @@ const handleDeleteAll = async () => {
                       <div className="media-details">
                         <p><strong>Filename:</strong> {item.filename}</p>
                         <p><strong>Extracted Text:</strong> {item.extracted_text}</p>
-
                         <p><strong>Deleted on:</strong> {new Date(item.deleted_at * 1000).toLocaleString()}</p>
+                        <button 
+                          className="copy-bttn-profile"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCopy(item.extracted_text, item._id);
+                          }}
+                        >
+                          {copiedIds.has(item._id) ? 'Copied!' : 'Copy'}
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -880,8 +994,16 @@ const handleDeleteAll = async () => {
                       <div className="media-details">
                         <p><strong>Filename:</strong> {item.filename}</p>
                         <p><strong>Extracted Text:</strong> {item.extracted_text}</p>
-
                         <p><strong>Deleted on:</strong> {new Date(item.deleted_at * 1000).toLocaleString()}</p>
+                        <button 
+                          className="copy-bttn-profile"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCopy(item.extracted_text, item._id);
+                          }}
+                        >
+                          {copiedIds.has(item._id) ? 'Copied!' : 'Copy'}
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -898,6 +1020,15 @@ const handleDeleteAll = async () => {
                         <p><strong>Original Text:</strong> {item.original_text}</p>
                         <p><strong>Translated Text:</strong> {item.translated_text}</p>
                         <p><strong>Deleted on:</strong> {new Date(item.deleted_at * 1000).toLocaleString()}</p>
+                        <button 
+                          className="copy-bttn-profile"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCopy(item.translated_text, item._id);
+                          }}
+                        >
+                          {copiedIds.has(item._id) ? 'Copied!' : 'Copy'}
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -934,6 +1065,15 @@ const handleDeleteAll = async () => {
                           <p><strong>Original Text:</strong> {item.original_text}</p>
                           <p><strong>Summary:</strong> {item.summary}</p>
                           <p><strong>Deleted on:</strong> {new Date(item.deleted_at * 1000).toLocaleString()}</p>
+                          <button 
+                            className="copy-bttn-profile"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCopy(item.summary, item._id);
+                            }}
+                          >
+                            {copiedIds.has(item._id) ? 'Copied!' : 'Copy'}
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -945,8 +1085,15 @@ const handleDeleteAll = async () => {
                 <p>No items in trash</p>
               )}
             </div>
-            <button  className="delete-all-btn-new">Delete All</button>
-
+            <button 
+              className="delete-all-btn-new" 
+              onClick={handlePermanentDelete}
+              disabled={!activeCard || activeCard === "delete" || (
+                trashData[activeCard === 'langTranslator' ? 'translations' : activeCard]?.length === 0
+              )}
+            >
+              Delete All Permanently
+            </button>
           </div>
         </div>
       )}
