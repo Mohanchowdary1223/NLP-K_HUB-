@@ -88,6 +88,9 @@ multimedia_collection = db['multimedia']  # Collection for storing multimedia fi
 # Initialize GridFS
 fs = GridFS(db)
 
+# Add this after MongoDB connection setup
+trash_collection = db['trash']  # New collection for trash items
+
 # Text categorization function
 def categorize_text(text):
     lower_text = text.lower()
@@ -951,6 +954,44 @@ def get_summary(doc_id):
         })
 
     except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/move-to-trash', methods=['POST'])
+@login_required
+def move_to_trash():
+    try:
+        data = request.json
+        file_ids = data.get('file_ids', [])
+        collection_type = data.get('type')  # 'documentation', 'images', etc.
+        
+        # Find the documents to move
+        documents = list(multimedia_collection.find({
+            'email': current_user.email,
+            'file_id': {'$in': file_ids}
+        }))
+        
+        if documents:
+            # Add to trash collection with timestamp
+            trash_documents = [{
+                **doc,
+                'deleted_at': time.time(),
+                'original_collection': collection_type
+            } for doc in documents]
+            
+            trash_collection.insert_many(trash_documents)
+            
+            # Remove from original collection
+            multimedia_collection.delete_many({
+                'email': current_user.email,
+                'file_id': {'$in': file_ids}
+            })
+            
+            return jsonify({'message': f'Successfully moved {len(documents)} items to trash'}), 200
+        
+        return jsonify({'message': 'No documents found to move'}), 404
+
+    except Exception as e:
+        print(f"Error moving to trash: {e}")
         return jsonify({'error': str(e)}), 500
 
 @app.errorhandler(500)

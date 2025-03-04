@@ -11,6 +11,7 @@ import Synopsis from "../../assets/synopsis-img.png";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import defaultpic from "../../assets/user-solid.png";
+import deletimg from "../../assets/deleteimgprofile.png"
 
 function ProfileCard() {
   const [profileImage, setProfileImage] = useState(defaultpic); // Change initial state to defaultpic
@@ -221,10 +222,52 @@ function ProfileCard() {
     }));
   };
 
-  // Add function to handle deletion of selected items
-  const handleDeleteSelected = (type) => {
-    // TODO: Implement deletion logic here
-    console.log(`Deleting selected ${type}:`, selectedItems[type]);
+  // Update handleDeleteSelected function
+  const handleDeleteSelected = async (type) => {
+    try {
+      const itemsToDelete = selectedItems[type];
+      if (itemsToDelete.length === 0) {
+        console.log('No items selected');
+        return;
+      }
+
+      // Call backend to move items to trash
+      const response = await axios.post(
+        'http://localhost:5000/move-to-trash',
+        {
+          file_ids: itemsToDelete,
+          type: type
+        },
+        {
+          withCredentials: true
+        }
+      );
+
+      if (response.status === 200) {
+        // Update local state to remove moved items
+        setMediaData(prev => ({
+          ...prev,
+          [type]: prev[type].filter(item => !itemsToDelete.includes(item.file_id))
+        }));
+
+        // Reset selected items
+        setSelectedItems(prev => ({
+          ...prev,
+          [type]: []
+        }));
+
+        // Update upload counts
+        setUploadCounts(prev => ({
+          ...prev,
+          [`${type}Uploads`]: prev[`${type}Uploads`] - itemsToDelete.length
+        }));
+
+        // Exit edit mode
+        setIsEditMode(false);
+      }
+    } catch (error) {
+      console.error('Error moving items to trash:', error);
+    }
   };
 
   const DEFAULT_PROFILE_IMAGE =
@@ -362,6 +405,14 @@ function ProfileCard() {
           <p>Synopsis uploades</p>
           <span className="upload-count">
             {mediaData.documentation.length || 0} summaries
+          </span>
+        </div>
+
+        <div className="card" onClick={() => handleMediaView("delete")}>
+          <img src={deletimg} alt="" className="card-icon" />
+          <p>Deleted History</p>
+          <span className="upload-count">
+         Deleted
           </span>
         </div>
       </div>
@@ -631,6 +682,22 @@ function ProfileCard() {
         </div>
       )}
       
+      {activeCard === "delete" && (
+        <div className="popup-overlay">
+          <div className="popup-content">
+            <span className="popup-close" onClick={() => setActiveCard(null)}>
+              <FaTimes />
+            </span>
+            <h2 className="popup-title">Deleted History</h2>
+            <div className="media-list">
+
+            </div>
+            <div className="btn-div-profile">
+              <button className="delete-all-btn">Delete All</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
