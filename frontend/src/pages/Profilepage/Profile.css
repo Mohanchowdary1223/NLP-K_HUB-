@@ -438,6 +438,21 @@
   margin-top: 20px;
   font-size: 16px;
 }
+
+.delete-all-btn-new {
+  background-color: #d9534f;
+  color: white;
+  border: none;
+margin-left: 200px;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 50%;
+  margin-top: 20px;
+  font-size: 16px;
+}
+
+
 .delete-all-btn1 {
   background-color: #006666;
   color: white;
@@ -454,6 +469,10 @@
   background-color: #c9302c;
 }
 .delete-all-btn1:hover {
+  background-color: #004d4d;
+}
+
+.delete-all-btn-new:hover {
   background-color: #004d4d;
 }
 
@@ -671,6 +690,11 @@
     font-size: 14px;
     padding: 8px 16px;
   }
+  .delete-all-btn-new {
+    font-size: 14px;
+    padding: 8px 16px;
+    margin-left: 75px;
+  }
 }
 
 /* Extra Small Phones (350px and below) */
@@ -740,6 +764,11 @@
   .delete-all-btn {
     font-size: 12px;
     padding: 6px 12px;
+  }
+  .delete-all-btn-new {
+    font-size: 12px;
+    padding: 6px 12px;
+    margin-left: 50px;
   }
 }
 
@@ -1102,4 +1131,87 @@
 .delete-all-btn[disabled] {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Add these new styles */
+.trash-section {
+  margin-bottom: 20px;
+  padding: 15px;
+  border-radius: 8px;
+  background-color: #f5f5f5;
+}
+
+.trash-section h3 {
+  color: #333;
+  margin-bottom: 15px;
+  border-bottom: 2px solid #ddd;
+  padding-bottom: 5px;
+}
+
+.media-item {
+  padding: 15px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.media-item p {
+  margin: 5px 0;
+  color: #666;
+}
+
+.media-item p:first-child {
+  color: #333;
+  font-weight: bold;
+}
+
+.media-details, .translation-details, .documentation-details {
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  margin-top: 10px;
+}
+
+.media-details p, .translation-details p, .documentation-details p {
+  margin: 8px 0;
+  line-height: 1.4;
+}
+
+.text-content {
+  margin-top: 15px;
+  padding: 15px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.documentation-details h4 {
+  margin-bottom: 15px;
+  color: #333;
+  font-size: 1.1em;
+}
+
+.file-link {
+  display: inline-block;
+  margin: 10px 0;
+  padding: 8px 15px;
+  background-color: #007bff;
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+}
+
+.file-link:hover {
+  background-color: #0056b3;
+}
+
+.trash-section .media-item {
+  border: 1px solid #e0e0e0;
+  transition: transform 0.2s ease;
+}
+
+.trash-section .media-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }

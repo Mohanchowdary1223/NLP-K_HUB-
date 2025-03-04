@@ -61,6 +61,24 @@ function ProfileCard() {
     documentation: []
   });
 
+  // Add new state for trash data
+  const [trashData, setTrashData] = useState({
+    images: [],
+    videos: [],
+    audios: [],
+    translations: [],
+    documentation: []
+  });
+
+  // Add new state for trash counts
+  const [trashCounts, setTrashCounts] = useState({
+    images: 0,
+    videos: 0,
+    audios: 0,
+    translations: 0,
+    documentation: 0
+  });
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -132,6 +150,31 @@ function ProfileCard() {
     };
 
     fetchData();
+  }, []);
+
+  // Add new useEffect to fetch trash data
+  useEffect(() => {
+    const fetchTrashData = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/trash-data', {
+          withCredentials: true
+        });
+        setTrashData(response.data);
+        
+        // Update counts
+        setTrashCounts({
+          images: response.data.images.length,
+          videos: response.data.videos.length,
+          audios: response.data.audios.length,
+          translations: response.data.translations.length,
+          documentation: response.data.documentation.length
+        });
+      } catch (error) {
+        console.error('Error fetching trash data:', error);
+      }
+    };
+
+    fetchTrashData();
   }, []);
 
   const handleImageChange = async (e) => {
@@ -497,7 +540,7 @@ const handleDeleteAll = async () => {
           <img src={deletimg} alt="" className="card-icon" />
           <p>Deleted History</p>
           <span className="upload-count">
-         Deleted
+            {Object.values(trashCounts).reduce((a, b) => a + b, 0)} items
           </span>
         </div>
       </div>
@@ -781,30 +824,135 @@ const handleDeleteAll = async () => {
             <span className="popup-close" onClick={() => setActiveCard(null)}>
               <FaTimes />
             </span>
-            <h2 className="popup-title">Deleted History</h2>
+            <h2 className="popup-title">Trash ({Object.values(trashCounts).reduce((a, b) => a + b, 0)} items)</h2>
             <div className="media-list">
+              {/* Images Section */}
+              {trashData.images.length > 0 && (
+                <div className="trash-section">
+                  <h3>Deleted Images ({trashData.images.length})</h3>
+                  {trashData.images.map((item) => (
+                    <div key={item._id} className="media-item">
+                      <img
+                        src={`http://localhost:5000/media/file/${item.file_id}`}
+                        alt={item.filename}
+                        className="media-thumbnail"
+                      />
+                      <div className="media-details">
+                        <p><strong>Filename:</strong> {item.filename}</p>
+                        <p><strong>Extracted Text:</strong> {item.extracted_text}</p>
 
+                        <p><strong>Deleted on:</strong> {new Date(item.deleted_at * 1000).toLocaleString()}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Videos Section */}
+              {trashData.videos.length > 0 && (
+                <div className="trash-section">
+                  <h3>Deleted Videos ({trashData.videos.length})</h3>
+                  {trashData.videos.map((item) => (
+                    <div key={item._id} className="media-item">
+                      <video controls className="media-thumbnail">
+                        <source src={`http://localhost:5000/media/file/${item.file_id}`} type={item.content_type} />
+                      </video>
+                      <div className="media-details">
+                        <p><strong>Filename:</strong> {item.filename}</p>
+                        <p><strong>Extracted Text:</strong> {item.extracted_text}</p>
+
+                        <p><strong>Deleted on:</strong> {new Date(item.deleted_at * 1000).toLocaleString()}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Audios Section */}
+              {trashData.audios.length > 0 && (
+                <div className="trash-section">
+                  <h3>Deleted Audios ({trashData.audios.length})</h3>
+                  {trashData.audios.map((item) => (
+                    <div key={item._id} className="media-item">
+                      <audio controls className="media-player">
+                        <source src={`http://localhost:5000/media/file/${item.file_id}`} type={item.content_type} />
+                      </audio>
+                      <div className="media-details">
+                        <p><strong>Filename:</strong> {item.filename}</p>
+                        <p><strong>Extracted Text:</strong> {item.extracted_text}</p>
+
+                        <p><strong>Deleted on:</strong> {new Date(item.deleted_at * 1000).toLocaleString()}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Translations Section */}
+              {trashData.translations.length > 0 && (
+                <div className="trash-section">
+                  <h3>Deleted Translations ({trashData.translations.length})</h3>
+                  {trashData.translations.map((item) => (
+                    <div key={item._id} className="media-item">
+                      <div className="translation-details">
+                        <p><strong>Original Text:</strong> {item.original_text}</p>
+                        <p><strong>Translated Text:</strong> {item.translated_text}</p>
+                        <p><strong>Deleted on:</strong> {new Date(item.deleted_at * 1000).toLocaleString()}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Documentation Section */}
+              {trashData.documentation.length > 0 && (
+                <div className="trash-section">
+                  <h3>Deleted Synopsis ({trashData.documentation.length})</h3>
+                  {trashData.documentation.map((item) => (
+                    <div key={item._id} className="media-item">
+                      <div className="documentation-details">
+                        <h4>{item.filename}</h4>
+                        {item.content_type && item.content_type.includes("pdf") ? (
+                          <iframe
+                            src={`http://localhost:5000/media/file/${item.file_id}`}
+                            width="100%"
+                            height="200px"
+                            title="PDF Preview"
+                            className="pdf-preview"
+                          />
+                        ) : (
+                          <a
+                            href={`http://localhost:5000/media/file/${item.file_id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="file-link"
+                          >
+                            View Original Document
+                          </a>
+                        )}
+                        <div className="text-content">
+                          <p><strong>Original Text:</strong> {item.original_text}</p>
+                          <p><strong>Summary:</strong> {item.summary}</p>
+                          <p><strong>Deleted on:</strong> {new Date(item.deleted_at * 1000).toLocaleString()}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {Object.values(trashData).every(arr => arr.length === 0) && (
+                <p>No items in trash</p>
+              )}
             </div>
-            <div className="btn-div-profile">
-              <button 
-                className="delete-all-btn"
-                onClick={isEditMode ? handleDeleteSelected : handleDeleteAll}
-                disabled={isEditMode && !Object.values(selectedItems).some(items => items && items.length > 0)}
-              >
-                {isEditMode ? 'Delete Selected Items' : 'Delete All'}
-              </button>
-              <button 
-                className="delete-all-btn1"
-                onClick={handleEditClick}
-              >
-                {isEditMode ? 'Cancel' : 'Edit'}
-              </button>
-            </div>
+            <button  className="delete-all-btn-new">Delete All</button>
+
           </div>
         </div>
       )}
     </div>
   );
-}
+};
 
 export default ProfileCard;
+

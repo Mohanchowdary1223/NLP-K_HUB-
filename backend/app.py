@@ -783,8 +783,11 @@ def get_media_file(file_id):
         if not file:
             return jsonify({'error': 'File not found'}), 404
 
-        # Verify user has access to this file
+        # Verify user has access to this file (check both multimedia and trash collections)
         media_info = multimedia_collection.find_one({
+            'file_id': str(file_id),
+            'email': current_user.email
+        }) or trash_collection.find_one({
             'file_id': str(file_id),
             'email': current_user.email
         })
@@ -1085,6 +1088,48 @@ def move_to_trash():
 
     except Exception as e:
         print(f"Error moving items to trash: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/trash-data', methods=['GET'])
+@login_required
+def get_trash_data():
+    try:
+        # Fetch all trash items for current user
+        trash_items = list(trash_collection.find({
+            'email': current_user.email
+        }))
+
+        # Organize items by type
+        organized_data = {
+            'images': [],
+            'videos': [],
+            'audios': [],
+            'translations': [],
+            'documentation': []
+        }
+
+        for item in trash_items:
+            # Convert ObjectId to string for JSON serialization
+            item['_id'] = str(item['_id'])
+            if isinstance(item.get('file_id'), ObjectId):
+                item['file_id'] = str(item['file_id'])
+
+            # Categorize based on type or original_collection
+            if item.get('original_collection') == 'translations':
+                organized_data['translations'].append(item)
+            elif item.get('type') == 'image':
+                organized_data['images'].append(item)
+            elif item.get('type') == 'video':
+                organized_data['videos'].append(item)
+            elif item.get('type') == 'audio':
+                organized_data['audios'].append(item)
+            elif item.get('type') == 'documentation':
+                organized_data['documentation'].append(item)
+
+        return jsonify(organized_data)
+
+    except Exception as e:
+        print(f"Error fetching trash data: {e}")
         return jsonify({'error': str(e)}), 500
 
 @app.errorhandler(500)
