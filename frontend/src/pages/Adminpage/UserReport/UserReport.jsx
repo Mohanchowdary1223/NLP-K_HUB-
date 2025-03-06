@@ -81,7 +81,7 @@ const UserReport = () => {
           <div className="nav-links">
             <NavLink to='/userdata' className="nav-link">Users List</NavLink>
             <NavLink to='/userreport' className="nav-link">Report</NavLink>
-            <NavLink to='/' className="home-btn">Home</NavLink>
+            <NavLink to='/' className="home-btn">Logout</NavLink>
           </div>
         </div>
         <div className="report-container">

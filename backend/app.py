@@ -796,21 +796,35 @@ def get_media_file(file_id):
         if not file:
             return jsonify({'error': 'File not found'}), 404
 
-        # Verify user has access to this file
+        # First check in multimedia collection
         media_info = multimedia_collection.find_one({
-            'file_id': str(file_id),
-            'email': current_user.email
-        }) or trash_collection.find_one({
-            'file_id': str(file_id),
+            '$or': [
+                {'file_id': str(file_id)},
+                {'file_id': file_id}
+            ],
             'email': current_user.email
         })
-        
+
+        # If not found in multimedia collection, check trash collection
+        if not media_info:
+            media_info = trash_collection.find_one({
+                '$or': [
+                    {'file_id': str(file_id)},
+                    {'file_id': file_id}
+                ],
+                'email': current_user.email
+            })
+
         if not media_info:
             return jsonify({'error': 'Unauthorized'}), 403
 
-        # Create response with file data
+        # Create response with file data and proper headers
         response = make_response(file.read())
         response.mimetype = file.content_type or 'application/octet-stream'
+        response.headers['Content-Type'] = file.content_type or 'application/octet-stream'
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
         return response
 
     except Exception as e:
@@ -1112,7 +1126,7 @@ def get_trash_data():
             'email': current_user.email
         }))
 
-        # Organize items by type and validate data
+        # Initialize organized data structure
         organized_data = {
             'images': [],
             'videos': [],
@@ -1121,32 +1135,36 @@ def get_trash_data():
             'documentation': []
         }
 
+        # Process each trash item
         for item in trash_items:
             try:
-                # Ensure item has required fields
-                if not item:
-                    continue
-
-                # Convert ObjectId to string for JSON serialization
-                item['_id'] = str(item.get('_id', ''))
+                # Convert ObjectId to string
+                item['_id'] = str(item['_id'])
                 
-                # Validate file_id if present
+                # Ensure file_id is properly formatted
                 if 'file_id' in item:
                     if isinstance(item['file_id'], ObjectId):
                         item['file_id'] = str(item['file_id'])
-                    elif not item['file_id']:
-                        continue  # Skip items with invalid file_id
 
-                # Categorize based on type or original_collection
-                if item.get('original_collection') == 'translations':
+                # Determine item type and add to appropriate list
+                if item.get('type') == 'image':
+                    organized_data['images'].append(item)
+                elif item.get('type') == 'video':
+                    organized_data['videos'].append(item)
+                elif item.get('type') == 'audio':
+                    organized_data['audios'].append(item)
+                elif item.get('type') == 'documentation':
+                    organized_data['documentation'].append(item)
+                elif item.get('original_collection') == 'translations':
                     organized_data['translations'].append(item)
-                elif item.get('type') in organized_data:
-                    organized_data[item['type']].append(item)
 
             except Exception as e:
                 print(f"Error processing trash item: {e}")
                 continue
 
+        # Log the response for debugging
+        print("Organized trash data:", organized_data)
+        
         return jsonify(organized_data)
 
     except Exception as e:
@@ -1273,3 +1291,35 @@ if __name__ == '__main__':
         
     except Exception as e:
         print(f"Failed to start application: {str(e)}")
+
+# Remove all existing serve_file routes and replace with these two routes
+@app.route('/admin/profile-image/<user>/<filename>', methods=['GET'])
+def serve_admin_profile_image(user, filename):
+    try:
+        user_folder = os.path.join(app.config['UPLOAD_FOLDER'], user)
+        # Allow access to profile images without authentication for admin routes
+        if os.path.exists(os.path.join(user_folder, filename)):
+            return send_from_directory(user_folder, filename)
+        return jsonify({"error": "File not found"}), 404
+    except Exception as e:
+        print(f"Error serving admin profile image: {e}")
+        return jsonify({'error': 'File not found'}), 404
+
+@app.route('/uploads/<user>/<filename>', methods=['GET'])
+def serve_user_file(user, filename):
+    try:
+        user_folder = os.path.join(app.config['UPLOAD_FOLDER'], user)
+        
+        # If authenticated user
+        if current_user.is_authenticated:
+            # Allow access if it's the user's own file or if they're an admin
+            if user == current_user.email or getattr(current_user, 'is_admin', False):
+                if os.path.exists(os.path.join(user_folder, filename)):
+                    return send_from_directory(user_folder, filename)
+                return jsonify({"error": "File not found"}), 404
+            return jsonify({"error": "Unauthorized"}), 403
+        return jsonify({"error": "Authentication required"}), 401
+        
+    except Exception as e:
+        print(f"Error serving user file: {e}")
+        return jsonify({'error': 'File not found'}), 404

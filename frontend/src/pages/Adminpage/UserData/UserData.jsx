@@ -20,8 +20,8 @@ const Navbar = () => (
       <NavLink to="/userreport" className="nav-link">
         Report
       </NavLink>
-      <NavLink to="/about" className="home-btn">
-        Home
+      <NavLink to="/" className="home-btn">
+        Logout
       </NavLink>
     </div>
   </div>
@@ -46,14 +46,14 @@ const UserData = () => {
         // Log the full user data to check the structure
         console.log('Fetched user data:', data);
         
-        // Modify user data to include profile image URL and handle missing fields
+        // Modify user data to include profile image URL using the new admin route
         const usersWithProfileImages = data.map(user => ({
           ...user,
           name: user.name || 'No Name',
           email: user.email || 'No Email',
           password: '*****', // For security, don't display actual password
           profile: user.profile_image 
-            ? `http://localhost:5000/uploads/${user.email}/${user.profile_image}`
+            ? `http://localhost:5000/admin/profile-image/${user.email}/${user.profile_image}`
             : DEFAULT_PROFILE_IMAGE,
           documentation: user.documentation || [],
           image_count: user.image_count || 0,

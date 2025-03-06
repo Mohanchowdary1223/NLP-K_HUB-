@@ -1,21 +1,23 @@
 import React, { useRef, useState } from 'react';
-import './ImgtoText.css'; // Assuming you're using this for CSS
-import Navbar from '../../components/Navbar/Navbar'; // Make sure this path is correct
+import Navbar from '../../components/Navbar/Navbar'; 
+import './ImgtoText.css'; 
 
 function ImageToText() {
     const [image, setImage] = useState(null);
     const [convertedText, setConvertedText] = useState('');
     const [isVisible, setIsVisible] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [model, setModel] = useState('simple'); // New state for model selection
-    const [isCopied, setIsCopied] = useState(false); // New state for copy functionality
+    const [model, setModel] = useState('simple');
+    const [isCopied, setIsCopied] = useState(false);
     const fileInputRef = useRef(null);
 
     const handleImageUpload = (e) => {
         const file = e.target.files[0];
-        setImage(file); // Keep file as a blob for backend upload
-        setConvertedText('');
-        setIsVisible(false);
+        if (file) {
+            setImage(file);
+            setConvertedText('');
+            setIsVisible(false);
+        }
     };
 
     const handlePlaceholderClick = () => {
@@ -31,7 +33,7 @@ function ImageToText() {
         setLoading(true);
         const formData = new FormData();
         formData.append('image', image);
-        formData.append('model', model); // Append selected model to form data
+        formData.append('model', model);
 
         try {
             const response = await fetch('http://localhost:5000/upload-image', {
@@ -73,7 +75,7 @@ function ImageToText() {
             navigator.clipboard.writeText(convertedText)
                 .then(() => {
                     setIsCopied(true);
-                    setTimeout(() => setIsCopied(false), 1000); // Reset after 1 second
+                    setTimeout(() => setIsCopied(false), 1500);
                 })
                 .catch(() => {
                     alert('Failed to copy text');
@@ -85,41 +87,30 @@ function ImageToText() {
         <div>
             <Navbar />
 
-            <div className={`main-container ${isVisible ? 'moved' : ''}`}>
+            <div className="main-container">
                 <h1>Image to Text Converter</h1>
 
-                {/* Model Selection Dropdown */}
                 <div className="model-selection">
                     <label htmlFor="model">Choose OCR Model:</label>
-                    <select id="model" value={model} onChange={(e) => setModel(e.target.value)}>
+                    <select 
+                        id="model" 
+                        value={model} 
+                        onChange={(e) => setModel(e.target.value)} 
+                        className="select-model-lable"
+                    >
                         <option value="simple">Simple OCR</option>
                         <option value="gemini">Gemini OCR</option>
                         <option value="tableocr">Table OCR</option>
                     </select>
                 </div>
 
-                {/* Converted Text Section */}
-                <div className={`converted-text-section ${isVisible ? 'visible' : ''}`}>
-                    <h3>Here is the converted text</h3>
-                    <button
-                        className={`copy-btn ${isCopied ? 'copied' : ''}`}
-                        onClick={handleCopy}
-                    >
-                        {isCopied ? 'Copied!' : 'Copy'}
-                    </button>
-                    {convertedText ? (
-                        <div className="converted-text">
-                            <p>{convertedText}</p>
-                        </div>
-                    ) : (
-                        <p>No text converted yet.</p>
-                    )}
-                </div>
-
-                {/* Image Upload Section */}
-                <div className={`image-area ${isVisible ? 'moved' : ''}`} onClick={handlePlaceholderClick}>
+                <div className="image-area" onClick={handlePlaceholderClick}>
                     {image ? (
-                        <img src={URL.createObjectURL(image)} alt="Uploaded" className="uploaded-image" />
+                        <img 
+                            src={URL.createObjectURL(image)} 
+                            alt="Uploaded" 
+                            className="uploaded-image" 
+                        />
                     ) : (
                         <div className="placeholder">
                             <span>+ Add Image</span>
@@ -131,18 +122,38 @@ function ImageToText() {
                     accept="image/*"
                     ref={fileInputRef}
                     onChange={handleImageUpload}
-                    style={{ display: 'none' }}
                 />
 
-                {/* Loading Indicator */}
                 {loading && <p>Converting image, please wait...</p>}
 
-                {/* Buttons */}
-                <div className={`buttons ${isVisible ? 'moved' : ''}`}>
+                <div className="buttons">
                     <button onClick={handleConvert} className="convert-btn">Convert</button>
                     <button onClick={handleClear} className="clear-btn">Clear</button>
                 </div>
             </div>
+            <div className='supprating-div'>
+                            
+            {isVisible && (
+                <div className="converted-text-section1">
+                    <h3>Here is the converted text</h3>
+                    <button
+                        className={`copy-btn1 ${isCopied ? 'copied' : ''}`}
+                        onClick={handleCopy}
+                    >
+                        {isCopied ? 'Copied!' : 'Copy'}
+                    </button>
+                    {convertedText ? (
+                        <div className="converted-text1">
+                            <p>{convertedText}</p>
+                        </div>
+                    ) : (
+                        <p>No text converted yet.</p>
+                    )}
+                </div>
+            )}
+
+            </div>
+
         </div>
     );
 }

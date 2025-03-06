@@ -43,7 +43,7 @@ const Navbar = () => {
   return (
     <nav>
       <div className="logo-container">
-        <Link to={`${email == "admin@gmail.com" ? '/userdata' : '/about'}`}> 
+        <Link to="/about"> 
           <img src={logoImage} alt="Logo" className="logo-image" /> 
         </Link>
         <h2 className="logo">Data Dialect.</h2>

@@ -970,7 +970,7 @@ const handlePermanentDelete = async () => {
             <h2 className="popup-title">Trash ({Object.values(trashCounts).reduce((a, b) => a + b, 0)} items)</h2>
             <div className="media-list">
               {/* Images Section */}
-              {trashData.images.length > 0 && (
+              {trashData.images && trashData.images.length > 0 && (
                 <div className="trash-section">
                   <h3>Deleted Images ({trashData.images.length})</h3>
                   {trashData.images.map((item) => (
@@ -1006,64 +1006,84 @@ const handlePermanentDelete = async () => {
               )}
 
               {/* Videos Section */}
-              {trashData.videos.length > 0 && (
-                <div className="trash-section">
-                  <h3>Deleted Videos ({trashData.videos.length})</h3>
-                  {trashData.videos.map((item) => (
-                    item && item.file_id ? (  // Add validation check
-                    <div key={item._id} className="media-item">
-                      <video controls className="media-thumbnail">
-                        <source src={`http://localhost:5000/media/file/${item.file_id}`} type={item.content_type} />
-                      </video>
-                      <div className="media-details">
-                        <p><strong>Filename:</strong> {item.filename}</p>
-                        <p><strong>Extracted Text:</strong> {item.extracted_text}</p>
-                        <p><strong>Deleted on:</strong> {new Date(item.deleted_at * 1000).toLocaleString()}</p>
-                        <button 
-                          className="copy-bttn-profile"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleCopy(item.extracted_text, item._id);
-                          }}
-                        >
-                          {copiedIds.has(item._id) ? 'Copied!' : 'Copy'}
-                        </button>
-                      </div>
-                    </div>
-                    ) : null
-                  ))}
-                </div>
-              )}
+{trashData.videos && trashData.videos.length > 0 && (
+  <div className="trash-section">
+    <h3>Deleted Videos ({trashData.videos.length})</h3>
+    {trashData.videos.map((item) => (
+      item && item.file_id ? (
+        <div key={item._id} className="media-item">
+          <div className="video-container">
+            <video 
+              controls 
+              className="media-thumbnail"
+              crossOrigin="anonymous"
+            >
+              <source 
+                src={`http://localhost:5000/media/file/${item.file_id}`} 
+                type={item.content_type || 'video/mp4'} 
+              />
+              Your browser does not support the video tag.
+            </video>
+          </div>
+          <div className="media-details">
+            <p><strong>Filename:</strong> {item.filename}</p>
+            <p><strong>Extracted Text:</strong> {item.extracted_text}</p>
+            <p><strong>Deleted on:</strong> {new Date(item.deleted_at * 1000).toLocaleString()}</p>
+            <button 
+              className="copy-bttn-profile"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleCopy(item.extracted_text, item._id);
+              }}
+            >
+              {copiedIds.has(item._id) ? 'Copied!' : 'Copy'}
+            </button>
+          </div>
+        </div>
+      ) : null
+    ))}
+  </div>
+)}
 
               {/* Audios Section */}
-              {trashData.audios.length > 0 && (
-                <div className="trash-section">
-                  <h3>Deleted Audios ({trashData.audios.length})</h3>
-                  {trashData.audios.map((item) => (
-                    item && item.file_id ? (  // Add validation check
-                    <div key={item._id} className="media-item">
-                      <audio controls className="media-player">
-                        <source src={`http://localhost:5000/media/file/${item.file_id}`} type={item.content_type} />
-                      </audio>
-                      <div className="media-details">
-                        <p><strong>Filename:</strong> {item.filename}</p>
-                        <p><strong>Extracted Text:</strong> {item.extracted_text}</p>
-                        <p><strong>Deleted on:</strong> {new Date(item.deleted_at * 1000).toLocaleString()}</p>
-                        <button 
-                          className="copy-bttn-profile"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleCopy(item.extracted_text, item._id);
-                          }}
-                        >
-                          {copiedIds.has(item._id) ? 'Copied!' : 'Copy'}
-                        </button>
-                      </div>
-                    </div>
-                    ) : null
-                  ))}
-                </div>
-              )}
+{trashData.audios && trashData.audios.length > 0 && (
+  <div className="trash-section">
+    <h3>Deleted Audios ({trashData.audios.length})</h3>
+    {trashData.audios.map((item) => (
+      item && item.file_id ? (
+        <div key={item._id} className="media-item">
+          <div className="audio-container">
+            <audio 
+              controls 
+              className="media-player"
+              crossOrigin="anonymous"
+            >
+              <source 
+                src={`http://localhost:5000/media/file/${item.file_id}`} 
+                type={item.content_type || 'audio/mpeg'} 
+              />
+              Your browser does not support the audio element.
+            </audio>
+          </div>
+          <div className="media-details">
+            <p><strong>Filename:</strong> {item.filename}</p>
+            <p><strong>Extracted Text:</strong> {item.extracted_text}</p>
+            <p><strong>Deleted on:</strong> {new Date(item.deleted_at * 1000).toLocaleString()}</p>
+            <button 
+              className="copy-bttn-profile"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleCopy(item.extracted_text, item._id);
+              }}
+            >
+              {copiedIds.has(item._id) ? 'Copied!' : 'Copy'}
+            </button>
+          </div>
+        </div>
+      ) : null
+    ))}
+  </div>
+)}
 
               {/* Translations Section */}
               {trashData.translations.length > 0 && (
@@ -1081,7 +1101,7 @@ const handlePermanentDelete = async () => {
                             e.stopPropagation();
                             handleCopy(item.translated_text, item._id);
                           }}
-                        >
+                       >
                           {copiedIds.has(item._id) ? 'Copied!' : 'Copy'}
                         </button>
                       </div>
