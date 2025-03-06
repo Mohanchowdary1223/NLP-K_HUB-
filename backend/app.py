@@ -775,15 +775,28 @@ def get_media_files():
 @login_required
 def get_media_file(file_id):
     try:
-        # Get file from GridFS
-        if isinstance(file_id, str):
+        # Validate file_id
+        if not file_id or file_id == 'undefined':
+            return jsonify({'error': 'Invalid file ID'}), 400
+
+        try:
+            # Convert string ID to ObjectId
             file_id = ObjectId(file_id)
-        
+        except Exception as e:
+            print(f"Invalid ObjectId format: {file_id}")
+            return jsonify({'error': 'Invalid file ID format'}), 400
+
+        # Check if file exists in GridFS
+        if not fs.exists(file_id):
+            print(f"File not found in GridFS: {file_id}")
+            return jsonify({'error': 'File not found'}), 404
+
+        # Get file from GridFS
         file = fs.get(file_id)
         if not file:
             return jsonify({'error': 'File not found'}), 404
 
-        # Verify user has access to this file (check both multimedia and trash collections)
+        # Verify user has access to this file
         media_info = multimedia_collection.find_one({
             'file_id': str(file_id),
             'email': current_user.email
@@ -797,7 +810,7 @@ def get_media_file(file_id):
 
         # Create response with file data
         response = make_response(file.read())
-        response.mimetype = file.content_type
+        response.mimetype = file.content_type or 'application/octet-stream'
         return response
 
     except Exception as e:
@@ -1099,7 +1112,7 @@ def get_trash_data():
             'email': current_user.email
         }))
 
-        # Organize items by type
+        # Organize items by type and validate data
         organized_data = {
             'images': [],
             'videos': [],
@@ -1109,28 +1122,120 @@ def get_trash_data():
         }
 
         for item in trash_items:
-            # Convert ObjectId to string for JSON serialization
-            item['_id'] = str(item['_id'])
-            if isinstance(item.get('file_id'), ObjectId):
-                item['file_id'] = str(item['file_id'])
+            try:
+                # Ensure item has required fields
+                if not item:
+                    continue
 
-            # Categorize based on type or original_collection
-            if item.get('original_collection') == 'translations':
-                organized_data['translations'].append(item)
-            elif item.get('type') == 'image':
-                organized_data['images'].append(item)
-            elif item.get('type') == 'video':
-                organized_data['videos'].append(item)
-            elif item.get('type') == 'audio':
-                organized_data['audios'].append(item)
-            elif item.get('type') == 'documentation':
-                organized_data['documentation'].append(item)
+                # Convert ObjectId to string for JSON serialization
+                item['_id'] = str(item.get('_id', ''))
+                
+                # Validate file_id if present
+                if 'file_id' in item:
+                    if isinstance(item['file_id'], ObjectId):
+                        item['file_id'] = str(item['file_id'])
+                    elif not item['file_id']:
+                        continue  # Skip items with invalid file_id
+
+                # Categorize based on type or original_collection
+                if item.get('original_collection') == 'translations':
+                    organized_data['translations'].append(item)
+                elif item.get('type') in organized_data:
+                    organized_data[item['type']].append(item)
+
+            except Exception as e:
+                print(f"Error processing trash item: {e}")
+                continue
 
         return jsonify(organized_data)
 
     except Exception as e:
         print(f"Error fetching trash data: {e}")
         return jsonify({'error': str(e)}), 500
+
+@app.route('/permanently-delete', methods=['POST'])
+@login_required
+def permanently_delete():
+    try:
+        data = request.json
+        items = data.get('items', {})
+        
+        if not items:
+            return jsonify({
+                'message': 'No items provided',
+                'status': 'warning'
+            }), 200
+
+        total_deleted = 0
+        results = {}
+        user_email = current_user.email
+
+        print(f"Processing permanent deletion request for user {user_email}")
+        print("Items to delete:", items)
+
+        # Handle each type of media
+        for media_type in ['images', 'videos', 'audios', 'documentation', 'translations']:
+            if items.get(media_type):
+                try:
+                    # Get items from trash
+                    query = {
+                        'email': user_email,
+                        'original_collection': media_type
+                    }
+                    
+                    if media_type != 'translations':
+                        query['file_id'] = {'$in': items[media_type]}
+
+                    # Find items before deletion
+                    to_delete = list(trash_collection.find(query))
+                    
+                    # Delete files from GridFS if they exist
+                    if media_type != 'translations':
+                        for item in to_delete:
+                            try:
+                                if 'file_id' in item:
+                                    file_id = ObjectId(item['file_id'])
+                                    if fs.exists(file_id):
+                                        fs.delete(file_id)
+                                        print(f"Deleted file {file_id} from GridFS")
+                            except Exception as e:
+                                print(f"Error deleting file from GridFS: {e}")
+                                continue
+
+                    # Delete from trash collection
+                    result = trash_collection.delete_many(query)
+                    deleted_count = result.deleted_count
+                    
+                    total_deleted += deleted_count
+                    results[media_type] = deleted_count
+                    
+                    print(f"Deleted {deleted_count} {media_type} items")
+
+                except Exception as type_error:
+                    print(f"Error processing {media_type}: {type_error}")
+                    continue
+
+        if total_deleted > 0:
+            response_data = {
+                'message': f'Successfully deleted {total_deleted} items permanently',
+                'details': results,
+                'status': 'success'
+            }
+            print("Deletion successful:", response_data)
+            return jsonify(response_data), 200
+        
+        return jsonify({
+            'message': 'No items were deleted',
+            'status': 'warning'
+        }), 200
+
+    except Exception as e:
+        error_msg = f"Error in permanent deletion: {str(e)}"
+        print(error_msg)
+        return jsonify({
+            'error': error_msg,
+            'status': 'error'
+        }), 500
 
 @app.errorhandler(500)
 def internal_error(error):

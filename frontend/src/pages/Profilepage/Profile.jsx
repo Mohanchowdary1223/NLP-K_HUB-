@@ -422,32 +422,77 @@ const handleDeleteAll = async () => {
 
 // Add this new function after handleDeleteAll
 const handlePermanentDelete = async () => {
-  if (!activeCard || !window.confirm('Are you sure you want to permanently delete all items? This action cannot be undone.')) {
+  if (!window.confirm('Are you sure you want to permanently delete all items? This action cannot be undone.')) {
     return;
   }
 
   try {
+    // Get all items from current visible section in trash
+    const itemsToDelete = {
+      images: [],
+      videos: [],
+      audios: [],
+      translations: [],
+      documentation: []
+    };
+
+    // Get all visible items based on section
+    if (trashData.images && trashData.images.length > 0) {
+      itemsToDelete.images = trashData.images.map(item => item.file_id);
+    }
+    if (trashData.videos && trashData.videos.length > 0) {
+      itemsToDelete.videos = trashData.videos.map(item => item.file_id);
+    }
+    if (trashData.audios && trashData.audios.length > 0) {
+      itemsToDelete.audios = trashData.audios.map(item => item.file_id);
+    }
+    if (trashData.translations && trashData.translations.length > 0) {
+      itemsToDelete.translations = trashData.translations.map(item => item._id);
+    }
+    if (trashData.documentation && trashData.documentation.length > 0) {
+      itemsToDelete.documentation = trashData.documentation.map(item => item.file_id);
+    }
+
+    // Check if there are any items to delete
+    const hasItems = Object.values(itemsToDelete).some(arr => arr.length > 0);
+    if (!hasItems) {
+      alert('No items to delete');
+      return;
+    }
+
+    console.log('Sending items to delete:', itemsToDelete);
+
     const response = await axios.post(
-      'http://localhost:5000/permanent-delete-trash',
-      { type: activeCard === 'langTranslator' ? 'translations' : activeCard }, // Map 'langTranslator' to 'translations'
+      'http://localhost:5000/permanently-delete',
+      { items: itemsToDelete },
       { withCredentials: true }
     );
 
     if (response.status === 200) {
-      // Update trash data
-      setTrashData(prev => ({
-        ...prev,
-        [activeCard === 'langTranslator' ? 'translations' : activeCard]: []
-      }));
+      // Clear all trash data
+      setTrashData({
+        images: [],
+        videos: [],
+        audios: [],
+        translations: [],
+        documentation: []
+      });
 
-      // Update trash counts
-      setTrashCounts(prev => ({
-        ...prev,
-        [activeCard === 'langTranslator' ? 'translations' : activeCard]: 0
-      }));
+      // Reset all trash counts
+      setTrashCounts({
+        images: 0,
+        videos: 0,
+        audios: 0,
+        translations: 0,
+        documentation: 0
+      });
+
+      // Show success message
+      alert('All items have been permanently deleted');
     }
   } catch (error) {
     console.error('Error performing permanent deletion:', error);
+    alert('Failed to delete items permanently');
   }
 };
 
@@ -929,11 +974,16 @@ const handlePermanentDelete = async () => {
                 <div className="trash-section">
                   <h3>Deleted Images ({trashData.images.length})</h3>
                   {trashData.images.map((item) => (
+                    item && item.file_id ? (  // Add validation check
                     <div key={item._id} className="media-item">
                       <img
                         src={`http://localhost:5000/media/file/${item.file_id}`}
-                        alt={item.filename}
+                        alt={item.filename || 'Deleted image'}
                         className="media-thumbnail"
+                        onError={(e) => {
+                          console.error("Error loading image:", e);
+                          e.target.src = "fallback-image-url";
+                        }}
                       />
                       <div className="media-details">
                         <p><strong>Filename:</strong> {item.filename}</p>
@@ -950,6 +1000,7 @@ const handlePermanentDelete = async () => {
                         </button>
                       </div>
                     </div>
+                    ) : null
                   ))}
                 </div>
               )}
@@ -959,6 +1010,7 @@ const handlePermanentDelete = async () => {
                 <div className="trash-section">
                   <h3>Deleted Videos ({trashData.videos.length})</h3>
                   {trashData.videos.map((item) => (
+                    item && item.file_id ? (  // Add validation check
                     <div key={item._id} className="media-item">
                       <video controls className="media-thumbnail">
                         <source src={`http://localhost:5000/media/file/${item.file_id}`} type={item.content_type} />
@@ -978,6 +1030,7 @@ const handlePermanentDelete = async () => {
                         </button>
                       </div>
                     </div>
+                    ) : null
                   ))}
                 </div>
               )}
@@ -987,6 +1040,7 @@ const handlePermanentDelete = async () => {
                 <div className="trash-section">
                   <h3>Deleted Audios ({trashData.audios.length})</h3>
                   {trashData.audios.map((item) => (
+                    item && item.file_id ? (  // Add validation check
                     <div key={item._id} className="media-item">
                       <audio controls className="media-player">
                         <source src={`http://localhost:5000/media/file/${item.file_id}`} type={item.content_type} />
@@ -1006,6 +1060,7 @@ const handlePermanentDelete = async () => {
                         </button>
                       </div>
                     </div>
+                    ) : null
                   ))}
                 </div>
               )}
@@ -1088,9 +1143,7 @@ const handlePermanentDelete = async () => {
             <button 
               className="delete-all-btn-new" 
               onClick={handlePermanentDelete}
-              disabled={!activeCard || activeCard === "delete" || (
-                trashData[activeCard === 'langTranslator' ? 'translations' : activeCard]?.length === 0
-              )}
+              disabled={Object.values(trashCounts).reduce((a, b) => a + b, 0) === 0}
             >
               Delete All Permanently
             </button>
