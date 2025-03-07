@@ -283,38 +283,39 @@ def upload_audio():
         if file.filename == '':
             return jsonify({"error": "No file selected"}), 400
 
-        # Store in GridFS
-        file_id = fs.put(
-            file.read(),
-            filename=secure_filename(file.filename),
-            content_type=file.content_type
-        )
+        # Create a user-specific folder
+        user_folder = os.path.join(app.config['UPLOAD_FOLDER'], current_user.email)
+        if not os.path.exists(user_folder):
+            os.makedirs(user_folder)
+
+        # Save audio file in the user folder
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(user_folder, filename)
+        file.save(filepath)
 
         # Process the audio
-        extracted_text = audio_to_text(file)
+        extracted_text = audio_to_text(filepath)
         classified_data = classify_text(extracted_text)
 
-        # Store metadata in MongoDB using same structure as images
+        # Store audio metadata in MongoDB
         multimedia_collection.insert_one({
             'email': current_user.email,
-            'file_id': str(file_id),
-            'filename': secure_filename(file.filename),
+            'filepath': filepath,
             'type': 'audio',
-            'content_type': file.content_type,
             'extracted_text': extracted_text,
             'classified_data': classified_data,
             'timestamp': time.time()
         })
 
         return jsonify({
-            "file_id": str(file_id),
             "extracted_text": extracted_text,
             "classified_data": classified_data
         })
 
     except Exception as e:
-        print(f"Error in upload_audio: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        print(f"Unexpected error in upload_audio: {str(e)}")
+        return jsonify({"error": "An unexpected error occurred"}), 500
+5
 
 @app.route('/api/<path:path>', methods=['OPTIONS'])
 def handle_options(path=None):
@@ -337,38 +338,47 @@ def convert_video():
         if file.filename == '':
             return jsonify({"error": "No selected file"}), 400
 
-        # Store in GridFS
-        file_id = fs.put(
-            file.read(),
-            filename=secure_filename(file.filename),
-            content_type=file.content_type
-        )
+        # Create a user-specific folder
+        user_folder = os.path.join(app.config['UPLOAD_FOLDER'], current_user.email)
+        if not os.path.exists(user_folder):
+            os.makedirs(user_folder)
+
+        # Save the video file
+        filename = secure_filename(file.filename)
+        video_path = os.path.join(user_folder, filename)
+        file.save(video_path)
 
         # Process the video
-        result = main(file)
-        extracted_text = result.get("extracted_text", "") if isinstance(result, dict) else result
-        classification = result.get("classification", {}) if isinstance(result, dict) else {}
+        result = main(video_path)
+        
+        # Ensure result contains extracted_text
+        if isinstance(result, str):
+            extracted_text = result
+            classification = {}
+        else:
+            extracted_text = result.get("extracted_text", "")
+            classification = result.get("classification", {})
 
-        # Store metadata in MongoDB using same structure as images
+        if not extracted_text:
+            return jsonify({"error": "No text could be extracted from the video"}), 400
+
+        # Store video metadata in MongoDB
         multimedia_collection.insert_one({
             'email': current_user.email,
-            'file_id': str(file_id),
-            'filename': secure_filename(file.filename),
+            'filepath': video_path,
             'type': 'video',
-            'content_type': file.content_type,
             'extracted_text': extracted_text,
             'classification': classification,
             'timestamp': time.time()
         })
 
         return jsonify({
-            "file_id": str(file_id),
             "extracted_text": extracted_text,
             "classification": classification
         })
 
     except Exception as e:
-        print("Error in convert_video:", str(e))
+        print("Error in /convert-video:", str(e))
         return jsonify({"error": str(e)}), 500
 
 @app.route('/profile/upload-image', methods=['POST'])

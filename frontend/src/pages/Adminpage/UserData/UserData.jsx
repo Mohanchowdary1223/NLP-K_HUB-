@@ -32,39 +32,52 @@ const UserData = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [activeTab, setActiveTab] = useState("images");
   const [selectedMedia, setSelectedMedia] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Fetch users from backend
   useEffect(() => {
     const fetchUsers = async () => {
       try {
+        setLoading(true);
         const response = await fetch("http://localhost:5000/admin-users", {
-          credentials: 'include' // Add this to include cookies if needed
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
         });
-        if (!response.ok) throw new Error('Failed to fetch users');
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const data = await response.json();
+        console.log('Raw user data:', data); // Debug log
         
-        // Log the full user data to check the structure
-        console.log('Fetched user data:', data);
-        
-        // Modify user data to include profile image URL using the new admin route
+        if (!Array.isArray(data)) {
+          console.error('Received data is not an array:', data);
+          return;
+        }
+
         const usersWithProfileImages = data.map(user => ({
           ...user,
+          _id: user._id || String(Math.random()), // Ensure we have an ID
           name: user.name || 'No Name',
           email: user.email || 'No Email',
-          password: '*****', // For security, don't display actual password
+          password: '*****',
           profile: user.profile_image 
             ? `http://localhost:5000/admin/profile-image/${user.email}/${user.profile_image}`
             : DEFAULT_PROFILE_IMAGE,
-          documentation: user.documentation || [],
-          image_count: user.image_count || 0,
-          video_count: user.video_count || 0,
-          audio_count: user.audio_count || 0,
-          translation_count: user.translation_count || 0,
         }));
         
+        console.log('Processed user data:', usersWithProfileImages); // Debug log
         setUsers(usersWithProfileImages);
       } catch (error) {
         console.error("Error fetching users:", error);
+        setError(error.message);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -192,6 +205,15 @@ const MessagesSection = ({ user }) => {
   );
 };
 
+  // Add loading and error states to the render
+  if (loading) {
+    return <div className="loading">Loading user data...</div>;
+  }
+
+  if (error) {
+    return <div className="error">Error: {error}</div>;
+  }
+
   return (
     <div className="admin-container">
       <div className="admin-content">
@@ -205,7 +227,6 @@ const MessagesSection = ({ user }) => {
               <b>Profile</b>
               <b>Name</b>
               <b>Email</b>
-              <b>Password</b>
               <b>Actions</b>
             </div>
 
@@ -213,7 +234,7 @@ const MessagesSection = ({ user }) => {
             {users.length > 0 ? (
               users.map((user, index) => (
                 <div
-                  key={user._id || index}
+                  key={user._id}
                   className="list-table-format"
                   onClick={() => handleUserClick(user)}
                 >
@@ -225,13 +246,12 @@ const MessagesSection = ({ user }) => {
                       className="profile-img"
                       onError={(e) => {
                         e.target.src = DEFAULT_PROFILE_IMAGE;
-                        console.error("Error loading profile image");
+                        console.log(`Error loading profile image for ${user.email}`);
                       }}
                     />
                   </div>
                   <p>{user.name}</p>
                   <p>{user.email}</p>
-                  <p>*****</p>
                   <div className="actions" onClick={(e) => e.stopPropagation()}>
                     <FaTrash className="delete-icon-a" title="Delete" />
                   </div>
@@ -239,7 +259,7 @@ const MessagesSection = ({ user }) => {
               ))
             ) : (
               <div className="list-table-format">
-                <p colSpan="6">No users found</p>
+                <p>No users found</p>
               </div>
             )}
           </div>
