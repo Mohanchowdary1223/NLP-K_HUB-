@@ -131,7 +131,7 @@ function ImageToText() {
                     <button onClick={handleClear} className="clear-btn">Clear</button>
                 </div>
             </div>
-            <div className='supprating-div'>
+            <div className='r'>
                             
             {isVisible && (
                 <div className="converted-text-section1">
