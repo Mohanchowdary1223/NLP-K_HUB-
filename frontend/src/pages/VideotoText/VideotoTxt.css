@@ -16,24 +16,31 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  height: calc(100vh - 80px);
+  height: auto;
   flex-direction: column;
   padding: 20px;
   box-sizing: border-box;
 }
 
 .video-area {
-  background-color: #c1f0ec;
-  height: 400px;
+  background-color: #f5f5f5;
+  border: 2px dashed #004d4d;
+  height: 350px;
+  min-height: 300px;
   max-width: 800px;
-  width: 100%;
+  width: 50%;
   display: flex;
   align-items: center; /* Center content vertically */
   justify-content: center; /* Center content horizontally */
   margin-bottom: 20px;
   overflow: hidden; /* Remove scrollbar */
-  position: relative;
-  transition: transform 0.5s ease; /* Smooth transition for movement */
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.video-area:hover {
+  border-color: #2dc5b8;
+  background-color: #f0f0f0;
 }
 
 .video-area.moved {
@@ -42,9 +49,8 @@
 
 .uploaded-image,
 .uploaded-media {
-  
-  height: 100%;
-  width: 100%;
+  max-height: 100%;
+  max-width: 100%;
   object-fit: contain;
 }
 
@@ -70,8 +76,9 @@ input[type="file"] {
 }
 
 .buttons {
-  margin-top: 30px;
+  margin-top: 20px;
   display: flex;
+  gap: 15px;
   justify-content: center;
   transition: transform 0.5s ease; /* Smooth transition for buttons */
 }
@@ -81,18 +88,38 @@ input[type="file"] {
 }
 
 .clear-btn {
-  background-color: #2dc5b8;
-  color: white;
-  padding: 12px 20px;
+  background-color: #e0e0e0;
+  color: #333;
+  padding: 12px 30px;
   border: none;
-  margin: 0 10px;
   border-radius: 5px;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: all 0.3s ease;
 }
+
+.clear-btn:hover {
+  background-color: #d0d0d0;
+  transform: translateY(-2px);
+}
+
 .copy-btn.copied {
   background-color: #005f51; /* Change button color when copied */
   color: white; /* Optional: Change text color */
+}
+
+.convert-btn {
+  background-color: #004d4d;
+  color: white;
+  padding: 12px 30px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.convert-btn:hover {
+  background-color: #006666;
+  transform: translateY(-2px);
 }
 
 .clear-btn:hover{
@@ -186,7 +213,85 @@ input[type="file"] {
   background-color: #26b0a4;
 }
 
+/* Result section styling */
+.converted-text-section1 {
+  width: 100vw;
+  height: auto;
+  background-color: #2f2f2f;
+  display: flex;
+  flex-direction: column;
+  color: white;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 50px;
+}
+
+.converted-text-section1 h3 {
+  font-size: 24px;
+  color: #2dc5b8;
+  margin-bottom: 10px;
+  margin-top: 10px;
+}
+
+.converted-text1 {
+  background-color: #f0f0f0;
+  box-shadow: 0 40px 80px rgba(255, 255, 255, 0.2);
+  padding: 20px;
+  margin-top: 10px;
+  position: relative;
+  min-height: 100px;
+  max-height: 500px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  color: #004d4d;
+  scrollbar-width: thin;
+  scrollbar-color: #2dc5b8 #c1f0ec;
+  width: 100%;
+}
+
+.copy-btn1 {
+  background-color: #2dc5b8;
+  color: white;
+  padding: 8px 15px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  position: absolute;
+  top: 10px;
+  right: 20px;
+  transition: all 0.3s ease;
+}
+
+.copy-btn1:hover {
+  background-color: #26b0a4;
+}
+
+.copy-btn1.copied {
+  background-color: #005f51;
+  color: white;
+}
+
 /* Responsive Design */
+@media (max-width: 1439px) {
+  .video-area {
+    width: 70%;
+  }
+}
+
+@media (max-width: 991px) {
+  .main-container h1 {
+    font-size: 28px;
+    margin-top: 50px;
+  }
+
+  .video-area {
+    width: 80%;
+    height: 300px;
+  }
+}
+
 @media (max-width: 768px) {
   .main-container {
     height: calc(100vh - 80px);
@@ -213,5 +318,42 @@ input[type="file"] {
 
   .clear-btn {
     margin: 10px 0;
+  }
+}
+
+@media (max-width: 767px) {
+  .main-container h1 {
+    font-size: 24px;
+    margin-top: 70px;
+  }
+
+  .video-area {
+    width: 90%;
+    height: 250px;
+  }
+
+  .buttons {
+    flex-direction: column;
+    width: 90%;
+  }
+
+  .buttons button {
+    width: 100%;
+    margin: 5px 0;
+  }
+}
+
+@media (max-width: 575px) {
+  .main-container h1 {
+    font-size: 20px;
+  }
+
+  .video-area {
+    width: 95%;
+    height: 200px;
+  }
+
+  .converted-text-section1 {
+    padding: 20px 15px;
   }
 }

@@ -24,6 +24,13 @@ function ImageToText() {
         fileInputRef.current.click();
     };
 
+    const scrollToBottom = () => {
+        window.scrollTo({
+            top: document.documentElement.scrollHeight,
+            behavior: 'smooth'
+        });
+    };
+
     const handleConvert = async () => {
         if (!image) {
             alert('Please upload an image first!');
@@ -55,6 +62,8 @@ function ImageToText() {
 
             setConvertedText(result.extracted_text || '');
             setIsVisible(true);
+            // Add scroll after text is set
+            setTimeout(scrollToBottom, 100); // Small delay to ensure state is updated
             
         } catch (error) {
             console.error('Error:', error);

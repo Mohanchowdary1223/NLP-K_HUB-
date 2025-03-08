@@ -14,6 +14,13 @@ function AudioToText() {
     const [isCopied, setIsCopied] = useState(false); // New state for copy functionality
     const fileInputRef = useRef(null);
 
+    const scrollToBottom = () => {
+        window.scrollTo({
+            top: document.documentElement.scrollHeight,
+            behavior: 'smooth'
+        });
+    };
+
     const handleAudioUpload = (e) => {
         const file = e.target.files[0];
         setAudio(file); // Store as file object for backend
@@ -53,6 +60,7 @@ function AudioToText() {
             setConvertedText(data.extracted_text);
             setClassifiedData(data.classified_data);
             setIsVisible(true);
+            setTimeout(scrollToBottom, 100);
         } catch (error) {
             console.error('Error:', error);
             alert(error.message || 'Error processing the audio file.');
@@ -76,6 +84,7 @@ function AudioToText() {
                 const data = await response.json();
                 setConvertedText(data.extracted_text); // Show transcription
                 setIsVisible(true); // Make sidebar visible
+                setTimeout(scrollToBottom, 100);
             } else {
                 const errorData = await response.json();
                 alert(`Error: ${errorData.error}`);
@@ -113,41 +122,21 @@ function AudioToText() {
     return (
         <div>
             <Navbar />
-
             <div className="main-container">
                 <h1>Audio to Text Converter</h1>
-
-                {/* Converted Text Section */}
-                <div className={`converted-text-section ${isVisible ? 'visible' : ''}`}>
-                    <h3>Here is the converted text</h3>
-                    <button
-                        className={`copy-btn ${isCopied ? 'copied' : ''}`}
-                        onClick={handleCopy}
-                    >
-                        {isCopied ? 'Copied!' : 'Copy'}
-                    </button>
-                    {convertedText ? (
-                        <div className="converted-text">
-                            <p>{convertedText}</p>
-                            <div>
-                                <ul>
-                                    {Object.entries(classifiedData).map(([category, text]) => (
-                                        <li key={category}>
-                                            <strong>{category}:</strong> {text}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
+                
+                <div className="audio-area" onClick={handlePlaceholderClick}>
+                    {audio ? (
+                        <div className="audio-preview">
+                            <audio src={URL.createObjectURL(audio)} controls className='auido-view'/>
                         </div>
                     ) : (
-                        <p>No text converted yet.</p>
+                        <div className="placeholder">
+                            <span>+ Add Audio</span>
+                        </div>
                     )}
                 </div>
 
-                {/* Audio Upload Section */}
-                <div className="audio-area" onClick={handlePlaceholderClick}>
-                    {audio ? <p>{audio.name}</p> : <div className="placeholder"><span>+ Add Audio</span></div>}
-                </div>
                 <input
                     type="file"
                     accept="audio/*"
@@ -156,23 +145,51 @@ function AudioToText() {
                     style={{ display: 'none' }}
                 />
 
-                {/* Loading Indicator */}
-                {loading && <p>Processing audio, please wait...</p>}
+                {loading && <p className="loading-text">Processing audio, please wait...</p>}
 
-                {/* Buttons */}
                 <div className="buttons">
-                    <button onClick={handleAudioConvert} className="convert-btn">
-                        Convert
+                    <button onClick={handleAudioConvert} className="convert-btn" disabled={!audio || loading}>
+                        {loading ? "Converting..." : "Convert"}
                     </button>
-                    <button onClick={handleLiveRecording} className="live-record-btn" disabled={isRecording}>
-                        {isRecording ? 'Recording...' : 'Record Live Audio'}
+                    <button onClick={handleLiveRecording} className="live-record-btn" disabled={isRecording || loading}>
+                        {isRecording ? "Recording..." : "Record Live"}
                     </button>
-
-                    <button onClick={handleClear} className="clear-btn">
+                    <button onClick={handleClear} className="clear-btn" disabled={!audio && !convertedText}>
                         Clear
                     </button>
                 </div>
             </div>
+
+            {isVisible && (
+                <div className="converted-text-section1">
+                    <h3>Here is the converted text</h3>
+                    <button
+                        className={`copy-btn1 ${isCopied ? 'copied' : ''}`}
+                        onClick={handleCopy}
+                    >
+                        {isCopied ? 'Copied!' : 'Copy'}
+                    </button>
+                    {convertedText ? (
+                        <div className="converted-text1">
+                            <p>{convertedText}</p>
+                            {Object.keys(classifiedData).length > 0 && (
+                                <div className="classified-data">
+                                    <h4>Classified Information:</h4>
+                                    <ul>
+                                        {Object.entries(classifiedData).map(([category, text]) => (
+                                            <li key={category}>
+                                                <strong>{category}:</strong> {text}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <p>No text converted yet.</p>
+                    )}
+                </div>
+            )}
         </div>
     );
 }

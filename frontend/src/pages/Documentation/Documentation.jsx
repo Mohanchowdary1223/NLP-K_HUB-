@@ -34,6 +34,13 @@ function VideoToText() {
     fileInputRef.current.click();
   };
 
+  const scrollToBottom = () => {
+    window.scrollTo({
+      top: document.documentElement.scrollHeight,
+      behavior: 'smooth'
+    });
+  };
+
   const handleConvert = async () => {
     if (!fileInputRef.current.files[0]) {
       alert('Please upload a file first!');
@@ -66,6 +73,7 @@ function VideoToText() {
       if (response.data && response.data.extracted_text) {
         setConvertedText(response.data.extracted_text);
         setIsVisible(true);
+        setTimeout(scrollToBottom, 100);
       } else {
         throw new Error('No text extracted from the file');
       }
@@ -101,14 +109,53 @@ function VideoToText() {
   return (
     <div>
       <Navbar />
-      <div className={`main-container ${isVisible ? 'moved' : ''}`}>
+      <div className="main-container">
         <h1>Summarize Your File</h1>
 
-        {/* Converted Text Section */}
-        <div className={`converted-text-section ${isVisible ? 'visible' : ''}`}>
-          <h3>KEY NOTES.</h3>
+        <div className="document-area" onClick={handlePlaceholderClick}>
+          {media ? (
+            mediaType === 'video' ? (
+              <video src={media} controls className="uploaded-media" />
+            ) : (
+              <div className="pdf-preview">
+                <iframe
+                  src={media}
+                  title="Uploaded Document"
+                  className="uploaded-media"
+                  frameBorder="0"
+                />
+              </div>
+            )
+          ) : (
+            <div className="placeholder">
+              <span>+ Add File (Video or PDF)</span>
+            </div>
+          )}
+        </div>
+
+        <input
+          type="file"
+          accept="video/*,application/pdf"
+          ref={fileInputRef}
+          onChange={handleMediaUpload}
+          style={{ display: 'none' }}
+        />
+
+        <div className="buttons">
+          <button onClick={handleConvert} className="convert-btn" disabled={!media || isLoading}>
+            {isLoading ? "Processing..." : "Convert"}
+          </button>
+          <button onClick={handleClear} className="clear-btn" disabled={!media && !convertedText}>
+            Clear
+          </button>
+        </div>
+      </div>
+
+      {isVisible && (
+        <div className="converted-text-section1">
+          <h3>KEY NOTES</h3>
           <button
-            className={`copy-btn ${isCopied ? 'copied' : ''}`}
+            className={`copy-btn1 ${isCopied ? 'copied' : ''}`}
             onClick={handleCopy}
           >
             {isCopied ? 'Copied!' : 'Copy'}
@@ -117,7 +164,7 @@ function VideoToText() {
             <p>Processing...</p>
           ) : (
             convertedText ? (
-              <div className="converted-text">
+              <div className="converted-text1">
                 <p>{convertedText}</p>
               </div>
             ) : (
@@ -125,40 +172,7 @@ function VideoToText() {
             )
           )}
         </div>
-
-        {/* Media Upload Section */}
-        <div className={`video-area ${isVisible ? 'moved' : ''}`} onClick={handlePlaceholderClick}>
-          {media ? (
-            mediaType === 'video' ? (
-              <video src={media} controls className="uploaded-media" />
-            ) : (
-              <iframe
-                src={media}
-                title="Uploaded Document"
-                className="uploaded-media"
-                frameBorder="0"
-              />
-            )
-          ) : (
-            <div className="placehold">
-              <span>+ Add File (Video or PDF)</span>
-            </div>
-          )}
-        </div>
-        <input
-          type="file"
-          accept="video/*,application/pdf" // Allow videos and PDFs
-          ref={fileInputRef}
-          onChange={handleMediaUpload}
-          style={{ display: 'none' }}
-        />
-
-        {/* Buttons */}
-        <div className={`buttons ${isVisible ? 'moved' : ''}`}>
-          <button onClick={handleConvert} className="convert-btn">Convert</button>
-          <button onClick={handleClear} className="clear-btn">Clear</button>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

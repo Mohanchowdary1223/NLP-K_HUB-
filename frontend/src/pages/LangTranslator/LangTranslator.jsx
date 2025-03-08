@@ -177,7 +177,7 @@ function LangTranslator() {
           />
 
           <div className="translated-text">
-            <p>{translatedText || "Translation"}</p>
+            <p>{translatedText || "Translated Text"}</p>
           </div>
         </div>
 

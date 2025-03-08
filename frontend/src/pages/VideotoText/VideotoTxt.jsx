@@ -24,6 +24,13 @@ function VideoToText() {
     fileInputRef.current.click();
   };
 
+  const scrollToBottom = () => {
+    window.scrollTo({
+      top: document.documentElement.scrollHeight,
+      behavior: 'smooth'
+    });
+  };
+
   const handleConvert = async () => {
     if (media) {
       const formData = new FormData();
@@ -43,6 +50,7 @@ function VideoToText() {
         if (response.data && response.data.extracted_text) {
           setConvertedText(response.data.extracted_text);
           setIsVisible(true);
+          setTimeout(scrollToBottom, 100);
         } else {
           console.error("No extracted text in response:", response);
           alert("No text could be extracted from the video.");
@@ -82,58 +90,59 @@ function VideoToText() {
   return (
     <div>
       <Navbar />
-
-      <div className={`main-container ${isVisible ? 'moved' : ''}`}>
+      <div className="main-container">
         <h1>Video to Text Converter</h1>
-
-        <div className={`converted-text-section ${isVisible ? 'visible' : ''}`}>
-          <h3>Here is the converted text</h3>
-          <button
-            className={`copy-btn ${isCopied ? 'copied' : ''}`}
-            onClick={handleCopy}
-          >
-            {isCopied ? 'Copied!' : 'Copy'}
-          </button>
-          {convertedText ? (
-            <div className="converted-text">
-              <p>{convertedText}</p>
-            </div>
-          ) : (
-            <p>No text converted yet.</p>
-          )}
-        </div>
-
-        <div className={`video-area ${isVisible ? 'moved' : ''}`} onClick={handlePlaceholderClick}>
+        
+        <div className="video-area" onClick={handlePlaceholderClick}>
           {media ? (
-            media.type.startsWith('video') ? (
-              <video src={URL.createObjectURL(media)} controls className="uploaded-media" />
-            ) : (
-              <img src={URL.createObjectURL(media)} alt="Uploaded" className="uploaded-image" />
-            )
+            <video src={URL.createObjectURL(media)} controls className="uploaded-media" />
           ) : (
             <div className="placeholder">
               <span>+ Add Video</span>
             </div>
           )}
         </div>
+
         <input
           type="file"
-          accept="image/*,video/*"
+          accept="video/*"
           ref={fileInputRef}
           onChange={handleMediaUpload}
           style={{ display: 'none' }}
         />
 
-        <div className={`buttons ${isVisible ? 'moved' : ''}`}>
+        <div className="buttons">
           <button onClick={handleConvert} className="convert-btn" disabled={!media || isLoading}>
-            {isLoading ? "Converting..." : "Convert"}
+            {isLoading ? "Processing..." : "Convert"}
           </button>
-
           <button onClick={handleClear} className="clear-btn" disabled={!media && !convertedText}>
             Clear
           </button>
         </div>
       </div>
+
+      {isVisible && (
+        <div className="converted-text-section1">
+          <h3>Here is the converted text</h3>
+          <button
+            className={`copy-btn1 ${isCopied ? 'copied' : ''}`}
+            onClick={handleCopy}
+          >
+            {isCopied ? 'Copied!' : 'Copy'}
+          </button>
+          {isLoading ? (
+            <p>Processing video, please wait...</p>
+          ) : (
+            convertedText ? (
+              <div className="converted-text1">
+                <p>{convertedText}</p>
+              </div>
+            ) : (
+              <p>No text converted yet.</p>
+            )
+          )}
+        </div>
+      )}
     </div>
   );
 }
