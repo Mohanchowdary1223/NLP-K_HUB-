@@ -1,8 +1,59 @@
 from flask import Blueprint, request, jsonify, session, make_response
 from flask_login import login_user, logout_user
 from models import User, bcrypt, users_collection
+import random
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from flask_cors import cross_origin
+import time  # Add this import
 
 auth_bp = Blueprint('auth', __name__)
+
+def generate_otp():
+    return str(random.randint(1000, 9999))
+
+def send_email_otp(email, otp):
+    sender_email = "mohansunkara963@gmail.com"  
+    # Generate an App Password from Google Account:
+    # 1. Go to Google Account Settings
+    # 2. Security
+    # 3. 2-Step Verification
+    # 4. App Passwords (at the bottom)
+    # 5. Generate a new app password for 'Mail'
+    sender_password = "ixsmidtdvlmadduj"  # Replace with your app password
+
+    msg = MIMEMultipart()
+    msg['From'] = sender_email
+    msg['To'] = email
+    msg['Subject'] = "Password Reset OTP - Data Dialect"
+
+    body = f"""
+    <html>
+      <body style="font-family: Arial, sans-serif; padding: 20px;">
+        <h2 style="color: #2C3E50;">Password Reset OTP</h2>
+        <p>Your OTP for password reset is: <strong style="font-size: 24px; color: #3498DB;">{otp}</strong></p>
+        <p>This OTP will expire in 10 minutes.</p>
+        <p style="color: #7F8C8D;">If you didn't request this password reset, please ignore this email.</p>
+        <hr>
+        <p style="font-size: 12px; color: #95A5A6;">This is an automated email. Please do not reply.</p>
+      </body>
+    </html>
+    """
+    msg.attach(MIMEText(body, 'html'))
+
+    try:
+        print(f"Attempting to send OTP to {email}")  # Debug log
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login(sender_email, sender_password)
+        server.send_message(msg)
+        server.quit()
+        print(f"OTP sent successfully to {email}")  # Debug log
+        return True
+    except Exception as e:
+        print(f"Error sending email: {str(e)}")  # Debug log
+        return False
 
 @auth_bp.route('/api/signup', methods=['POST', 'OPTIONS'])
 def signup():
@@ -111,3 +162,133 @@ def verify_email():
     response.headers.add("Access-Control-Allow-Origin", "http://localhost:5173")
     response.headers.add("Access-Control-Allow-Credentials", "true")
     return response
+
+@auth_bp.route('/api/send-otp', methods=['POST', 'OPTIONS'])
+def send_otp():
+    if request.method == 'OPTIONS':
+        response = make_response()
+        response.headers['Access-Control-Allow-Origin'] = 'http://localhost:5173'
+        response.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+        response.headers['Access-Control-Max-Age'] = '120'
+        return response, 200
+
+    try:
+        data = request.get_json()
+        email = data.get('email')
+
+        if not email:
+            return jsonify({"success": False, "message": "Email is required"}), 400
+
+        # Generate and store OTP
+        otp = generate_otp()
+        
+        # Actually send the email with OTP
+        if send_email_otp(email, otp):
+            # Only store in session if email was sent successfully
+            session['reset_otp'] = otp
+            session['reset_email'] = email
+            session['otp_timestamp'] = time.time()
+
+            response = jsonify({
+                "success": True,
+                "message": "OTP sent successfully to your email"
+            })
+        else:
+            response = jsonify({
+                "success": False,
+                "message": "Failed to send OTP email. Please try again."
+            })
+            return response, 500
+        
+        # Set CORS headers
+        response.headers['Access-Control-Allow-Origin'] = 'http://localhost:5173'
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+        return response
+
+    except Exception as e:
+        print(f"Error in send_otp: {str(e)}")
+        error_response = jsonify({
+            "success": False,
+            "message": f"Error sending OTP: {str(e)}"
+        })
+        error_response.headers['Access-Control-Allow-Origin'] = 'http://localhost:5173'
+        error_response.headers['Access-Control-Allow-Credentials'] = 'true'
+        return error_response, 500
+
+@auth_bp.route('/api/verify-otp', methods=['POST', 'OPTIONS'])
+def verify_otp():
+    if request.method == 'OPTIONS':
+        response = make_response()
+        response.headers['Access-Control-Allow-Origin'] = 'http://localhost:5173'
+        response.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+        return response, 200
+
+    try:
+        data = request.get_json()
+        email = data.get('email')
+        otp = data.get('otp')
+        new_password = data.get('newPassword')
+
+        if not all([email, otp, new_password]):
+            return jsonify({
+                "success": False,
+                "message": "Email, OTP and new password are required"
+            }), 400
+
+        # Verify OTP
+        stored_otp = session.get('reset_otp')
+        stored_email = session.get('reset_email')
+        stored_timestamp = session.get('otp_timestamp')
+
+        if not stored_otp or not stored_email or not stored_timestamp:
+            return jsonify({
+                "success": False,
+                "message": "OTP session expired"
+            }), 400
+
+        # Check if OTP is expired (10 minutes)
+        if time.time() - stored_timestamp > 600:
+            return jsonify({
+                "success": False,
+                "message": "OTP has expired"
+            }), 400
+
+        if email != stored_email or otp != stored_otp:
+            return jsonify({
+                "success": False,
+                "message": "Invalid OTP"
+            }), 400
+
+        # Update password in database
+        hashed_password = bcrypt.generate_password_hash(new_password).decode('utf-8')
+        users_collection.update_one(
+            {"email": email},
+            {"$set": {"password": hashed_password}}
+        )
+
+        # Clear session data
+        session.pop('reset_otp', None)
+        session.pop('reset_email', None)
+        session.pop('otp_timestamp', None)
+
+        response = jsonify({
+            "success": True,
+            "message": "Password updated successfully"
+        })
+        response.headers['Access-Control-Allow-Origin'] = 'http://localhost:5173'
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+        return response
+
+    except Exception as e:
+        print(f"Error in verify_otp: {str(e)}")
+        error_response = jsonify({
+            "success": False,
+            "message": f"Error verifying OTP: {str(e)}"
+        })
+        error_response.headers['Access-Control-Allow-Origin'] = 'http://localhost:5173'
+        error_response.headers['Access-Control-Allow-Credentials'] = 'true'
+        return error_response, 500

@@ -26,6 +26,8 @@ const Landingpage = () => {
   const [newPassword, setNewPassword] = useState("");
   const [reEnterPassword, setReEnterPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [otpSending, setOtpSending] = useState(false);
+  const [otpValue, setOtpValue] = useState("");
 
   const navigate = useNavigate();
 
@@ -167,19 +169,77 @@ const Landingpage = () => {
     setPasswordError("");
   };
 
-  const handleSendOtp = () => {
-    // Check if passwords are filled and match
-    if (!newPassword || !reEnterPassword) {
-      setPasswordError("Both password fields are required");
-      return;
-    }
+  const handleSendOtp = async () => {
+    try {
+        if (!newPassword || !reEnterPassword) {
+            setPasswordError("Both password fields are required");
+            return;
+        }
 
-    if (newPassword !== reEnterPassword) {
-      setPasswordError("Passwords do not match");
-      return;
-    }
+        if (newPassword !== reEnterPassword) {
+            setPasswordError("Passwords do not match");
+            return;
+        }
 
-    setShowOtpInput(true);
+        setOtpSending(true);
+        const response = await axios({
+            method: 'POST',
+            url: 'http://localhost:5000/auth/api/send-otp',
+            data: { email: forgotPasswordEmail },
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            withCredentials: true
+        });
+
+        if (response.data.success) {
+            setShowOtpInput(true);
+            console.log(response.data)
+            alert("OTP sent successfully!");
+        } else {
+            setPasswordError(response.data.message || "Failed to send OTP");
+        }
+    } catch (error) {
+        console.error("Error sending OTP:", error);
+        setPasswordError("Failed to send OTP. Please try again.");
+    } finally {
+        setOtpSending(false);
+    }
+};
+
+  const handleVerifyOtp = async () => {
+    try {
+      if (!otpValue) {
+        setPasswordError("Please enter OTP");
+        return;
+      }
+
+      const response = await axios.post(
+        'http://localhost:5000/auth/api/verify-otp',
+        { 
+          email: forgotPasswordEmail,
+          otp: otpValue,
+          newPassword: newPassword
+        },
+        {
+          withCredentials: true,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (response.data.success) {
+        alert("Password changed successfully!");
+        closeForgotPassword();
+      } else {
+        setPasswordError(response.data.message || "Invalid OTP");
+      }
+    } catch (error) {
+      console.error("Error verifying OTP:", error);
+      setPasswordError("Failed to verify OTP. Please try again.");
+    }
   };
 
   return (
@@ -353,17 +413,29 @@ const Landingpage = () => {
                   showOtpInput ? (
                     <>
                       <div className="input-field">
-                        <input type="text" placeholder="Enter OTP" />
+                        <input 
+                          type="text" 
+                          placeholder="Enter OTP" 
+                          value={otpValue}
+                          onChange={(e) => setOtpValue(e.target.value)}
+                          maxLength={4}
+                        />
                       </div>
-                      <button className="verify-btn">Verify OTP</button>
+                      <button 
+                        className="verify-btn"
+                        onClick={handleVerifyOtp}
+                        disabled={!otpValue || otpValue.length !== 4}
+                      >
+                        Verify OTP
+                      </button>
                     </>
                   ) : (
                     <button 
                       className="verify-btn" 
                       onClick={handleSendOtp}
-                      disabled={!newPassword || !reEnterPassword}
+                      disabled={!newPassword || !reEnterPassword || otpSending}
                     >
-                      Send OTP
+                      {otpSending ? "Sending OTP..." : "Send OTP"}
                     </button>
                   )
                 ) : null}

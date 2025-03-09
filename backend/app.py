@@ -22,10 +22,22 @@ from extractive_summarization import extract_content_from_pdf, summarize_text
 import tempfile
 
 app = Flask(__name__)
+
 app.secret_key = 'your_secret_key'
 
-# Enable CORS
-CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}}, supports_credentials=True)
+# Configure CORS properly
+CORS(app, 
+    resources={
+        r"/*": {  # Change from /auth/* to /* to cover all routes
+            "origins": ["http://localhost:5173"],
+            "methods": ["GET", "POST", "OPTIONS"],
+            "allow_headers": ["Content-Type", "Authorization"],
+            "supports_credentials": True,
+            "expose_headers": ["Content-Type"],
+            "max_age": 120  # Preflight request cache time in seconds
+        }
+    }
+)
 
 # Register auth blueprint
 app.register_blueprint(auth_bp, url_prefix="/auth")
