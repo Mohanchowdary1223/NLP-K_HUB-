@@ -28,6 +28,7 @@ const Landingpage = () => {
   const [passwordError, setPasswordError] = useState("");
   const [otpSending, setOtpSending] = useState(false);
   const [otpValue, setOtpValue] = useState("");
+  const [showPasswordFields, setShowPasswordFields] = useState(false);
 
   const navigate = useNavigate();
 
@@ -171,16 +172,6 @@ const Landingpage = () => {
 
   const handleSendOtp = async () => {
     try {
-        if (!newPassword || !reEnterPassword) {
-            setPasswordError("Both password fields are required");
-            return;
-        }
-
-        if (newPassword !== reEnterPassword) {
-            setPasswordError("Passwords do not match");
-            return;
-        }
-
         setOtpSending(true);
         const response = await axios({
             method: 'POST',
@@ -195,7 +186,6 @@ const Landingpage = () => {
 
         if (response.data.success) {
             setShowOtpInput(true);
-            console.log(response.data)
             alert("OTP sent successfully!");
         } else {
             setPasswordError(response.data.message || "Failed to send OTP");
@@ -208,39 +198,78 @@ const Landingpage = () => {
     }
 };
 
-  const handleVerifyOtp = async () => {
-    try {
-      if (!otpValue) {
-        setPasswordError("Please enter OTP");
-        return;
-      }
-
-      const response = await axios.post(
-        'http://localhost:5000/auth/api/verify-otp',
-        { 
-          email: forgotPasswordEmail,
-          otp: otpValue,
-          newPassword: newPassword
-        },
-        {
-          withCredentials: true,
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      if (response.data.success) {
-        alert("Password changed successfully!");
-        closeForgotPassword();
-      } else {
-        setPasswordError(response.data.message || "Invalid OTP");
-      }
-    } catch (error) {
-      console.error("Error verifying OTP:", error);
-      setPasswordError("Failed to verify OTP. Please try again.");
+const handleVerifyOtp = async () => {
+  try {
+    if (!otpValue) {
+      setPasswordError("Please enter OTP");
+      return;
     }
-  };
+
+    const response = await axios.post(
+      'http://localhost:5000/auth/api/verify-otp',
+      { 
+        email: forgotPasswordEmail,
+        otp: otpValue
+      },
+      {
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    if (response.data.success) {
+      setShowPasswordFields(true);
+      setPasswordError("");
+      setOtpValue("");
+      alert("OTP verified successfully! Please update your password.");
+    } else {
+      setPasswordError(response.data.message || "Invalid OTP");
+    }
+  } catch (error) {
+    console.error("Error verifying OTP:", error);
+    setPasswordError("Failed to verify OTP. Please try again.");
+  }
+};
+
+const handleChangePassword = async () => {
+  try {
+    if (!newPassword || !reEnterPassword) {
+      setPasswordError("Both password fields are required");
+      return;
+    }
+
+    if (newPassword !== reEnterPassword) {
+      setPasswordError("Passwords do not match");
+      return;
+    }
+
+    const response = await axios.post(
+      'http://localhost:5000/auth/api/change-password',
+      {
+        email: forgotPasswordEmail,
+        newPassword: newPassword
+      },
+      {
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    if (response.data.success) {
+      alert("Password changed successfully!");
+      closeForgotPassword();
+    } else {
+      setPasswordError(response.data.message || "Failed to change password");
+    }
+  } catch (error) {
+    console.error("Error changing password:", error);
+    setPasswordError("Failed to change password. Please try again.");
+  }
+};
 
   return (
     <div className="main">
@@ -349,32 +378,10 @@ const Landingpage = () => {
                     placeholder="Enter your email"
                     value={forgotPasswordEmail}
                     onChange={handleForgotPasswordEmailChange}
+                    disabled={isEmailVerified}
                   />
                 </div>
 
-                <div className="input-field">
-                  <input
-                    type={showNewPassword ? "text" : "password"}
-                    placeholder="New Password"
-                    value={newPassword}
-                    onChange={(e) => handlePasswordChange(e, true)}
-                  />
-                  <span className="eye-icon" onClick={toggleNewPasswordVisibility}>
-                    <FontAwesomeIcon icon={showNewPassword ? faEye : faEyeSlash} />
-                  </span>
-                </div>
-                <div className="input-field">
-                  <input
-                    type={showReEnterPassword ? "text" : "password"}
-                    placeholder="Re-enter New Password"
-                    value={reEnterPassword}
-                    onChange={(e) => handlePasswordChange(e, false)}
-                  />
-                  <span className="eye-icon" onClick={toggleReEnterPasswordVisibility}>
-                    <FontAwesomeIcon icon={showReEnterPassword ? faEye : faEyeSlash} />
-                  </span>
-                </div>
-                
                 <div className="verification-box">
                   <label>
                     <input
@@ -409,36 +416,72 @@ const Landingpage = () => {
                   </div>
                 )}
 
-                {showSendOtp ? (
-                  showOtpInput ? (
-                    <>
-                      <div className="input-field">
-                        <input 
-                          type="text" 
-                          placeholder="Enter OTP" 
-                          value={otpValue}
-                          onChange={(e) => setOtpValue(e.target.value)}
-                          maxLength={4}
-                        />
-                      </div>
+                {showSendOtp && (
+                  <>
+                    {showOtpInput ? (
+                      !showPasswordFields ? (
+                        <>
+                          <div className="input-field">
+                            <input 
+                              type="text" 
+                              placeholder="Enter OTP" 
+                              value={otpValue}
+                              onChange={(e) => setOtpValue(e.target.value)}
+                              maxLength={4}
+                            />
+                          </div>
+                          <button 
+                            className="verify-btn"
+                            onClick={handleVerifyOtp}
+                            disabled={!otpValue || otpValue.length !== 4}
+                          >
+                            Verify OTP
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <div className="input-field">
+                            <input
+                              type={showNewPassword ? "text" : "password"}
+                              placeholder="New Password"
+                              value={newPassword}
+                              onChange={(e) => handlePasswordChange(e, true)}
+                            />
+                            <span className="eye-icon" onClick={toggleNewPasswordVisibility}>
+                              <FontAwesomeIcon icon={showNewPassword ? faEye : faEyeSlash} />
+                            </span>
+                          </div>
+                          <div className="input-field">
+                            <input
+                              type={showReEnterPassword ? "text" : "password"}
+                              placeholder="Re-enter New Password"
+                              value={reEnterPassword}
+                              onChange={(e) => handlePasswordChange(e, false)}
+                            />
+                            <span className="eye-icon" onClick={toggleReEnterPasswordVisibility}>
+                              <FontAwesomeIcon icon={showReEnterPassword ? faEye : faEyeSlash} />
+                            </span>
+                          </div>
+                          <button 
+                            className="verify-btn"
+                            onClick={handleChangePassword}
+                            disabled={!newPassword || !reEnterPassword || newPassword !== reEnterPassword}
+                          >
+                            Change Password
+                          </button>
+                        </>
+                      )
+                    ) : (
                       <button 
-                        className="verify-btn"
-                        onClick={handleVerifyOtp}
-                        disabled={!otpValue || otpValue.length !== 4}
+                        className="verify-btn" 
+                        onClick={handleSendOtp}
+                        disabled={otpSending}
                       >
-                        Verify OTP
+                        {otpSending ? "Sending OTP..." : "Send OTP"}
                       </button>
-                    </>
-                  ) : (
-                    <button 
-                      className="verify-btn" 
-                      onClick={handleSendOtp}
-                      disabled={!newPassword || !reEnterPassword || otpSending}
-                    >
-                      {otpSending ? "Sending OTP..." : "Send OTP"}
-                    </button>
-                  )
-                ) : null}
+                    )}
+                  </>
+                )}
 
               </div>
             </>

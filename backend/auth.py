@@ -231,12 +231,11 @@ def verify_otp():
         data = request.get_json()
         email = data.get('email')
         otp = data.get('otp')
-        new_password = data.get('newPassword')
 
-        if not all([email, otp, new_password]):
+        if not all([email, otp]):
             return jsonify({
                 "success": False,
-                "message": "Email, OTP and new password are required"
+                "message": "Email and OTP are required"
             }), 400
 
         # Verify OTP
@@ -244,13 +243,12 @@ def verify_otp():
         stored_email = session.get('reset_email')
         stored_timestamp = session.get('otp_timestamp')
 
-        if not stored_otp or not stored_email or not stored_timestamp:
+        if not all([stored_otp, stored_email, stored_timestamp]):
             return jsonify({
                 "success": False,
                 "message": "OTP session expired"
             }), 400
 
-        # Check if OTP is expired (10 minutes)
         if time.time() - stored_timestamp > 600:
             return jsonify({
                 "success": False,
@@ -263,21 +261,10 @@ def verify_otp():
                 "message": "Invalid OTP"
             }), 400
 
-        # Update password in database
-        hashed_password = bcrypt.generate_password_hash(new_password).decode('utf-8')
-        users_collection.update_one(
-            {"email": email},
-            {"$set": {"password": hashed_password}}
-        )
-
-        # Clear session data
-        session.pop('reset_otp', None)
-        session.pop('reset_email', None)
-        session.pop('otp_timestamp', None)
-
+        # Don't clear session data yet, we need it for password change
         response = jsonify({
             "success": True,
-            "message": "Password updated successfully"
+            "message": "OTP verified successfully"
         })
         response.headers['Access-Control-Allow-Origin'] = 'http://localhost:5173'
         response.headers['Access-Control-Allow-Credentials'] = 'true'
@@ -288,6 +275,71 @@ def verify_otp():
         error_response = jsonify({
             "success": False,
             "message": f"Error verifying OTP: {str(e)}"
+        })
+        error_response.headers['Access-Control-Allow-Origin'] = 'http://localhost:5173'
+        error_response.headers['Access-Control-Allow-Credentials'] = 'true'
+        return error_response, 500
+
+@auth_bp.route('/api/change-password', methods=['POST', 'OPTIONS'])
+def change_password():
+    if request.method == 'OPTIONS':
+        response = make_response()
+        response.headers['Access-Control-Allow-Origin'] = 'http://localhost:5173'
+        response.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+        return response, 200
+
+    try:
+        data = request.get_json()
+        email = data.get('email')
+        new_password = data.get('newPassword')
+
+        if not all([email, new_password]):
+            return jsonify({
+                "success": False,
+                "message": "Email and new password are required"
+            }), 400
+
+        # Verify the session data exists
+        if not session.get('reset_otp') or email != session.get('reset_email'):
+            return jsonify({
+                "success": False,
+                "message": "Please verify OTP first"
+            }), 400
+
+        # Update password
+        hashed_password = bcrypt.generate_password_hash(new_password).decode('utf-8')
+        result = users_collection.update_one(
+            {"email": email},
+            {"$set": {"password": hashed_password}}
+        )
+
+        if result.modified_count > 0:
+            # Clear session data after successful password change
+            session.pop('reset_otp', None)
+            session.pop('reset_email', None)
+            session.pop('otp_timestamp', None)
+
+            response = jsonify({
+                "success": True,
+                "message": "Password updated successfully"
+            })
+        else:
+            response = jsonify({
+                "success": False,
+                "message": "Failed to update password"
+            })
+
+        response.headers['Access-Control-Allow-Origin'] = 'http://localhost:5173'
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+        return response
+
+    except Exception as e:
+        print(f"Error in change_password: {str(e)}")
+        error_response = jsonify({
+            "success": False,
+            "message": f"Error changing password: {str(e)}"
         })
         error_response.headers['Access-Control-Allow-Origin'] = 'http://localhost:5173'
         error_response.headers['Access-Control-Allow-Credentials'] = 'true'
