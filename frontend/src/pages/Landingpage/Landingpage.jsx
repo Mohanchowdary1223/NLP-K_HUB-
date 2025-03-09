@@ -17,6 +17,12 @@ const Landingpage = () => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showReEnterPassword, setShowReEnterPassword] = useState(false);
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
+  const [showOtpInput, setShowOtpInput] = useState(false);
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [showSendOtp, setShowSendOtp] = useState(false);
+  const [verificationMessage, setVerificationMessage] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [emailError, setEmailError] = useState("");
 
   const navigate = useNavigate();
 
@@ -103,6 +109,53 @@ const Landingpage = () => {
 
   const handleForgotPasswordEmailChange = (e) => {
     setForgotPasswordEmail(e.target.value);
+  };
+
+  const handleVerifyEmail = () => {
+    setShowOtpInput(true);
+  };
+
+  const handleEmailVerification = async () => {
+    setIsVerifying(true);
+    setEmailError("");
+    
+    try {
+        const response = await axios.post(
+            'http://localhost:5000/auth/api/verify-email',
+            { email: forgotPasswordEmail },
+            {
+                withCredentials: true,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+
+        setTimeout(() => {
+            setIsVerifying(false);
+            
+            if (response.data.exists) {
+                setIsEmailVerified(true);
+                setVerificationMessage("Email verified successfully!");
+                setShowSendOtp(true);
+            } else {
+                setEmailError("Email not found. Please enter correct email.");
+                setIsEmailVerified(false);
+            }
+        }, 2000);
+
+    } catch (error) {
+        setTimeout(() => {
+            setIsVerifying(false);
+            setEmailError("Error verifying email. Please try again.");
+            setIsEmailVerified(false);
+            console.error("Email verification error:", error);
+        }, 2000);
+    }
+};
+
+  const handleSendOtp = () => {
+    setShowOtpInput(true);
   };
 
   return (
@@ -233,15 +286,50 @@ const Landingpage = () => {
                     <FontAwesomeIcon icon={showReEnterPassword ? faEye : faEyeSlash} />
                   </span>
                 </div>
-                <div className="auth-options">
+                
+                <div className="verification-box">
                   <label>
-                    <input type="radio" name="authMethod" value="email" /> Authenticate through Email
+                    <input
+                      type="checkbox"
+                      onChange={handleEmailVerification}
+                      disabled={isEmailVerified || isVerifying || !forgotPasswordEmail}
+                      checked={isEmailVerified}
+                    />
+                    {isVerifying ? (
+                      <div className="loading-spinner"></div>
+                    ) : (
+                      "Verify Email"
+                    )}
                   </label>
                 </div>
-                <div className="input-field">
-                  <input type="text" placeholder="Enter OTP" />
-                </div>
-                <button className="verify-btn">Verify OTP</button>
+
+                {emailError && (
+                  <div className="error-message">
+                    {emailError}
+                  </div>
+                )}
+
+                {verificationMessage && (
+                  <div className="verification-message">
+                    {verificationMessage}
+                  </div>
+                )}
+
+                {showSendOtp ? (
+                  showOtpInput ? (
+                    <>
+                      <div className="input-field">
+                        <input type="text" placeholder="Enter OTP" />
+                      </div>
+                      <button className="verify-btn">Verify OTP</button>
+                    </>
+                  ) : (
+                    <button className="verify-btn" onClick={handleSendOtp}>
+                      Send OTP
+                    </button>
+                  )
+                ) : null}
+
               </div>
             </>
           )}

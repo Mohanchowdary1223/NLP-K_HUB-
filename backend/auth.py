@@ -82,3 +82,27 @@ def logout():
     logout_user()
     session.pop('email', None)
     return jsonify({"success": True, "message": "Logged out successfully!"}), 200
+
+@auth_bp.route('/api/verify-email', methods=['POST', 'OPTIONS'])
+def verify_email():
+    if request.method == 'OPTIONS':
+        response = make_response()
+        response.headers.add("Access-Control-Allow-Origin", "http://localhost:5173")
+        response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
+        response.headers.add("Access-Control-Allow-Headers", "Content-Type")
+        response.headers.add("Access-Control-Allow-Credentials", "true")
+        return response
+
+    data = request.get_json()
+    email = data.get('email')
+
+    if not email:
+        return jsonify({"exists": False, "message": "Email is required"}), 400
+
+    # Check if email exists in database
+    user = users_collection.find_one({"email": email})
+    
+    return jsonify({
+        "exists": bool(user),
+        "message": "Email verified successfully" if user else "Email not found"
+    })
