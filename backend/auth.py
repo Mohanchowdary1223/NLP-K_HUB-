@@ -86,12 +86,13 @@ def logout():
 @auth_bp.route('/api/verify-email', methods=['POST', 'OPTIONS'])
 def verify_email():
     if request.method == 'OPTIONS':
+        # Handle preflight request
         response = make_response()
         response.headers.add("Access-Control-Allow-Origin", "http://localhost:5173")
         response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
         response.headers.add("Access-Control-Allow-Headers", "Content-Type")
         response.headers.add("Access-Control-Allow-Credentials", "true")
-        return response
+        return response, 200  # Important: Return 200 status for OPTIONS
 
     data = request.get_json()
     email = data.get('email')
@@ -102,7 +103,11 @@ def verify_email():
     # Check if email exists in database
     user = users_collection.find_one({"email": email})
     
-    return jsonify({
+    # Add CORS headers to the actual response
+    response = jsonify({
         "exists": bool(user),
         "message": "Email verified successfully" if user else "Email not found"
     })
+    response.headers.add("Access-Control-Allow-Origin", "http://localhost:5173")
+    response.headers.add("Access-Control-Allow-Credentials", "true")
+    return response

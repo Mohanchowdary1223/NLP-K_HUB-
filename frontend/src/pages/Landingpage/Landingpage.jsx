@@ -23,6 +23,9 @@ const Landingpage = () => {
   const [verificationMessage, setVerificationMessage] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
   const [emailError, setEmailError] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [reEnterPassword, setReEnterPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
 
   const navigate = useNavigate();
 
@@ -154,7 +157,28 @@ const Landingpage = () => {
     }
 };
 
+  const handlePasswordChange = (e, isNewPassword) => {
+    const value = e.target.value;
+    if (isNewPassword) {
+      setNewPassword(value);
+    } else {
+      setReEnterPassword(value);
+    }
+    setPasswordError("");
+  };
+
   const handleSendOtp = () => {
+    // Check if passwords are filled and match
+    if (!newPassword || !reEnterPassword) {
+      setPasswordError("Both password fields are required");
+      return;
+    }
+
+    if (newPassword !== reEnterPassword) {
+      setPasswordError("Passwords do not match");
+      return;
+    }
+
     setShowOtpInput(true);
   };
 
@@ -272,6 +296,8 @@ const Landingpage = () => {
                   <input
                     type={showNewPassword ? "text" : "password"}
                     placeholder="New Password"
+                    value={newPassword}
+                    onChange={(e) => handlePasswordChange(e, true)}
                   />
                   <span className="eye-icon" onClick={toggleNewPasswordVisibility}>
                     <FontAwesomeIcon icon={showNewPassword ? faEye : faEyeSlash} />
@@ -281,6 +307,8 @@ const Landingpage = () => {
                   <input
                     type={showReEnterPassword ? "text" : "password"}
                     placeholder="Re-enter New Password"
+                    value={reEnterPassword}
+                    onChange={(e) => handlePasswordChange(e, false)}
                   />
                   <span className="eye-icon" onClick={toggleReEnterPasswordVisibility}>
                     <FontAwesomeIcon icon={showReEnterPassword ? faEye : faEyeSlash} />
@@ -315,6 +343,12 @@ const Landingpage = () => {
                   </div>
                 )}
 
+                {passwordError && (
+                  <div className="error-message">
+                    {passwordError}
+                  </div>
+                )}
+
                 {showSendOtp ? (
                   showOtpInput ? (
                     <>
@@ -324,7 +358,11 @@ const Landingpage = () => {
                       <button className="verify-btn">Verify OTP</button>
                     </>
                   ) : (
-                    <button className="verify-btn" onClick={handleSendOtp}>
+                    <button 
+                      className="verify-btn" 
+                      onClick={handleSendOtp}
+                      disabled={!newPassword || !reEnterPassword}
+                    >
                       Send OTP
                     </button>
                   )
