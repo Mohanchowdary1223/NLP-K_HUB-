@@ -29,6 +29,10 @@ const Landingpage = () => {
   const [otpSending, setOtpSending] = useState(false);
   const [otpValue, setOtpValue] = useState("");
   const [showPasswordFields, setShowPasswordFields] = useState(false);
+  const [otpSuccessMessage, setOtpSuccessMessage] = useState("");
+  const [otpVerificationMessage, setOtpVerificationMessage] = useState("");
+  const [verificationStatus, setVerificationStatus] = useState(""); // "success" or "error"
+  const [passwordChangeMessage, setPasswordChangeMessage] = useState("");
 
   const navigate = useNavigate();
 
@@ -121,6 +125,13 @@ const Landingpage = () => {
     setShowOtpInput(true);
   };
 
+  const showTemporaryMessage = (setMessageFunction, message, duration = 3000) => {
+    setMessageFunction(message);
+    setTimeout(() => {
+      setMessageFunction("");
+    }, duration);
+  };
+
   const handleEmailVerification = async () => {
     setIsVerifying(true);
     setEmailError("");
@@ -142,20 +153,19 @@ const Landingpage = () => {
             
             if (response.data.exists) {
                 setIsEmailVerified(true);
-                setVerificationMessage("Email verified successfully!");
+                setVerificationStatus("success");
                 setShowSendOtp(true);
             } else {
-                setEmailError("Email not found. Please enter correct email.");
                 setIsEmailVerified(false);
+                setVerificationStatus("error");
             }
         }, 2000);
 
     } catch (error) {
         setTimeout(() => {
             setIsVerifying(false);
-            setEmailError("Error verifying email. Please try again.");
             setIsEmailVerified(false);
-            console.error("Email verification error:", error);
+            setVerificationStatus("error");
         }, 2000);
     }
 };
@@ -186,13 +196,13 @@ const Landingpage = () => {
 
         if (response.data.success) {
             setShowOtpInput(true);
-            alert("OTP sent successfully!");
+            showTemporaryMessage(setOtpSuccessMessage, "OTP sent successfully!");
         } else {
-            setPasswordError(response.data.message || "Failed to send OTP");
+            showTemporaryMessage(setPasswordError, response.data.message || "Failed to send OTP");
         }
     } catch (error) {
         console.error("Error sending OTP:", error);
-        setPasswordError("Failed to send OTP. Please try again.");
+        showTemporaryMessage(setPasswordError, "Failed to send OTP. Please try again.");
     } finally {
         setOtpSending(false);
     }
@@ -201,7 +211,7 @@ const Landingpage = () => {
 const handleVerifyOtp = async () => {
   try {
     if (!otpValue) {
-      setPasswordError("Please enter OTP");
+      showTemporaryMessage(setPasswordError, "Please enter OTP");
       return;
     }
 
@@ -223,13 +233,13 @@ const handleVerifyOtp = async () => {
       setShowPasswordFields(true);
       setPasswordError("");
       setOtpValue("");
-      alert("OTP verified successfully! Please update your password.");
+      showTemporaryMessage(setOtpVerificationMessage, "OTP verified successfully!");
     } else {
-      setPasswordError(response.data.message || "Invalid OTP");
+      showTemporaryMessage(setPasswordError, response.data.message || "Invalid OTP");
     }
   } catch (error) {
     console.error("Error verifying OTP:", error);
-    setPasswordError("Failed to verify OTP. Please try again.");
+    showTemporaryMessage(setPasswordError, "Failed to verify OTP. Please try again.");
   }
 };
 
@@ -260,8 +270,10 @@ const handleChangePassword = async () => {
     );
 
     if (response.data.success) {
-      alert("Password changed successfully!");
-      closeForgotPassword();
+      showTemporaryMessage(setPasswordChangeMessage, "Password changed successfully!");
+      setTimeout(() => {
+        closeForgotPassword();
+      }, 3000);
     } else {
       setPasswordError(response.data.message || "Failed to change password");
     }
@@ -382,7 +394,7 @@ const handleChangePassword = async () => {
                   />
                 </div>
 
-                <div className="verification-box">
+                <div className={`verification-box ${verificationStatus}`}>
                   <label>
                     <input
                       type="checkbox"
@@ -393,7 +405,8 @@ const handleChangePassword = async () => {
                     {isVerifying ? (
                       <div className="loading-spinner"></div>
                     ) : (
-                      "Verify Email"
+                      isEmailVerified ? "Email Verified Successfully" : 
+                      verificationStatus === "error" ? "Email not found" : "Verify Email"
                     )}
                   </label>
                 </div>
@@ -416,6 +429,24 @@ const handleChangePassword = async () => {
                   </div>
                 )}
 
+                {otpSuccessMessage && (
+                  <div className="otp-success-message">
+                    {otpSuccessMessage}
+                  </div>
+                )}
+
+                {otpVerificationMessage && (
+                  <div className="otp-success-message">
+                    {otpVerificationMessage}
+                  </div>
+                )}
+
+                {passwordChangeMessage && (
+                  <div className="password-success-message">
+                    {passwordChangeMessage}
+                  </div>
+                )}
+
                 {showSendOtp && (
                   <>
                     {showOtpInput ? (
@@ -424,16 +455,16 @@ const handleChangePassword = async () => {
                           <div className="input-field">
                             <input 
                               type="text" 
-                              placeholder="Enter OTP" 
+                              placeholder="Enter 6-digit OTP" 
                               value={otpValue}
                               onChange={(e) => setOtpValue(e.target.value)}
-                              maxLength={4}
+                              maxLength={6}
                             />
                           </div>
                           <button 
                             className="verify-btn"
                             onClick={handleVerifyOtp}
-                            disabled={!otpValue || otpValue.length !== 4}
+                            disabled={!otpValue || otpValue.length !== 6}
                           >
                             Verify OTP
                           </button>

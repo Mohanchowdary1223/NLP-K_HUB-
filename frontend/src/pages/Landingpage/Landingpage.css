@@ -189,8 +189,12 @@ input:focus~label {
 }
 
 .forgot-password {
-  padding-bottom: 3px;
+  padding: 5px;
+  border-radius: 5px;
   border-bottom: 2px solid #eee;
+  background-color: #f3f3f3;
+  box-shadow: 0 0 5px 5px rgba(0, 0, 0, 0.2);
+
 }
 
 .sign-container button {
@@ -765,4 +769,61 @@ input:focus~label {
   margin-top: -8px;
   margin-bottom: 8px;
   text-align: left;
+}
+
+.verification-box.verified label {
+  color: #4CAF50;
+}
+
+.verification-box.verified input[type="checkbox"] {
+  accent-color: #4CAF50;
+  border-color: #4CAF50;
+}
+
+.verification-box.error label {
+  color: #dc3545;
+}
+
+.verification-box.error input[type="checkbox"] {
+  accent-color: #dc3545;
+  border-color: #dc3545;
+}
+
+.otp-success-message {
+  color: #4CAF50;
+  background-color: #e8f5e9;
+  padding: 10px;
+  border-radius: 4px;
+  margin: 10px 0;
+  text-align: center;
+  opacity: 1;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.otp-success-message.fade-out {
+  opacity: 0;
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.fade-out {
+  animation: fadeOut 0.3s ease-in-out forwards;
+}
+
+.password-success-message {
+  color: #4CAF50;
+  background-color: #e8f5e9;
+  padding: 10px;
+  border-radius: 4px;
+  margin: 10px 0;
+  text-align: center;
+  opacity: 1;
+  transition: opacity 0.3s ease-in-out;
 }

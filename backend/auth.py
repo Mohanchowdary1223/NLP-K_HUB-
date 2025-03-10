@@ -11,7 +11,7 @@ import time  # Add this import
 auth_bp = Blueprint('auth', __name__)
 
 def generate_otp():
-    return str(random.randint(1000, 9999))
+    return str(random.randint(100000, 999999))  # Generate 6-digit OTP
 
 def send_email_otp(email, otp):
     sender_email = "mohansunkara963@gmail.com"  
