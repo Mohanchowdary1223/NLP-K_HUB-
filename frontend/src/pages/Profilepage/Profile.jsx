@@ -246,13 +246,23 @@ function ProfileCard() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("http://localhost:5000/profile/update", formData, {
-        withCredentials: true,
-      });
-      console.log("Profile updated successfully");
-      setIsEditing(false);
+      const response = await axios.post(
+        "http://localhost:5000/profile/update",
+        formData,
+        {
+          withCredentials: true,
+        }
+      );
+
+      if (response.status === 200) {
+        // Close edit modal
+        setIsEditing(false);
+        // Show success notification (you might want to add a notification system)
+        alert("Profile updated successfully!");
+      }
     } catch (error) {
       console.error("Error updating profile:", error);
+      alert("Failed to update profile. Please try again.");
     }
   };
 
@@ -524,11 +534,16 @@ function ProfileCard() {
 
   const DEFAULT_PROFILE_IMAGE =
     "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+
+  const handleEditProfile = () => {
+    setIsEditing(true); // This opens the edit modal
+  };
+
   return (
     <div>
       <Navbar />
       <div className="profile-card">
-        <div className="edit-profile" onClick={handleEditClick}>
+        <div className="edit-profile" onClick={handleEditProfile}>
           <FaPen />
           <span>Edit Profile</span>
         </div>
@@ -569,14 +584,16 @@ function ProfileCard() {
       {isEditing && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h2>Edit Your Details</h2>
+            <div className="modal-header">
+              <h2>Edit Your Details</h2>
+            </div>
             <form onSubmit={handleSubmit} className="edit-profile-form">
               <div className="form-group">
                 <input
                   type="text"
-                  name="name" // Changed from firstName to name
-                  placeholder="Name" // Changed placeholder
-                  value={formData.name} // Added value binding
+                  name="name"
+                  placeholder="Name"
+                  value={formData.name}
                   onChange={handleInputChange}
                   required
                 />
@@ -588,6 +605,7 @@ function ProfileCard() {
                   placeholder="Email"
                   value={formData.email}
                   onChange={handleInputChange}
+                  disabled  // Email should be disabled as it's usually not changeable
                   required
                 />
                 <input
@@ -617,7 +635,16 @@ function ProfileCard() {
                   required
                 />
               </div>
-              <button type="submit">Save</button>
+              <div className="button-group">
+                <button type="submit" className="save-btn">Save</button>
+                <button 
+                  type="button" 
+                  className="cancel-btn" 
+                  onClick={() => setIsEditing(false)}
+                >
+                  Cancel
+                </button>
+              </div>
             </form>
           </div>
         </div>

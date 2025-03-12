@@ -164,6 +164,8 @@
   background-color: #f3f3f3;
   border: none;
   outline: none;
+  box-shadow: 0 0 5px 1px rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
 }
 
 .lab {
@@ -194,7 +196,6 @@ input:focus~label {
   border-bottom: 2px solid #eee;
   background-color: #f3f3f3;
   box-shadow: 0 0 5px 5px rgba(0, 0, 0, 0.2);
-
 }
 
 .sign-container button {
@@ -598,8 +599,8 @@ input:focus~label {
   }
 
   .sign-container {
-      width: 500px;
-      height: 350px;
+      width: 350px;
+      height: 400px;
   }
 
   .overlay-panel {
@@ -607,61 +608,82 @@ input:focus~label {
   }
 
   .right-panel h1 {
-      font-size: 25px;
-      padding-left: 135px;
+      font-size: 15px;
+      padding-left: 185px;
   }
 
 
   .right-panel p {
       margin-top: 15px;
       font-size: 12px;
-      padding-left: 135px;
+      padding-left: 195px;
   }
 
+  .sign-container button {
+
+    font-size: 10px;
+    font-weight: bold;
+    padding: 8px 20px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .toggle-button {
+    width: 110px;
+    height: 30px;
+  }
 
   .right-panel button {
-      margin-left: 70px;
-      margin-top: -85px;
+      margin-left: 100px;
+      
   }
 
   .left-panel h1 {
 
-      font-size: 25px;
-      padding-left: 75px;
+      font-size: 15px;
+      padding-left: 80px;
   }
 
   .left-panel p {
       margin-top: 15px;
-      font-size: 13px;
-      padding-left: 110px;
+      font-size: 10px;
+      padding-left: 135px;
       padding-right: 40px;
   }
 
   .left-panel button {
-      margin-left: 35px;
-      margin-top: -75px;
+      margin-left: 45px;
   }
 
-  .signup-section button {
-      margin-top: -20px;
-  }
+  
 
   .form-section h1 {
-      font-size: 24px;
+      font-size: 15px;
       margin-top: 15px;
+  }
+  .input-field input{
+    height: 20px;
+    border-radius: 5px;
+    width: 150px;
   }
 
   .form-section form {
       padding: 0;
   }
+  .forgot-password a{
+    font-size: 8px;
+
+  }
+  .form-section a {
+    font-size: 10px;
+  }
 
   .social-links {
       margin-top: -8px;
+  
+
   }
 
-  .signin-section button {
-      margin-top: -20px;
-  }
+
 }
 
 
@@ -674,9 +696,96 @@ input:focus~label {
   .para {
       font-size: 7px;
   }
+  .sign-container {
+    width: 300px;
+    height: 300px;
+}
 
   .signbtn {
       font-size: 0.6em;
+  }
+
+  .right-panel h1 {
+    font-size: 15px;
+    padding-left: 215px;
+}
+
+
+.right-panel p {
+    margin-top: 15px;
+    font-size: 9px;
+    padding-left: 225px;
+}
+.sign-container button {
+
+  font-size: 10px;
+  font-weight: bold;
+  padding: 10px 25px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.form-section span {
+  font-size: 10px;
+}
+.form-section a {
+  font-size: 8px;
+}
+
+.right-panel button {
+    margin-left: 110px;
+    margin-top: -90px;
+}
+.toggle-button {
+  width: 110px;
+  height: 30px;
+}
+
+.forgot-password a{
+  font-size: 10px;
+
+}
+.left-panel h1 {
+
+    font-size: 15px;
+    padding-left: 95px;
+}
+.input-field{
+  width: 150px;
+}
+.input-field input{
+  height: 20px;
+  border-radius: 5px;
+}
+
+.left-panel p {
+    margin-top: 15px;
+    font-size: 9px;
+    padding-left: 145px;
+    padding-right: 40px;
+}
+
+.left-panel button {
+    margin-left: 50px;
+    margin-top: -100px;
+}
+
+
+
+.form-section h1 {
+    font-size: 14px;
+    margin-top: 15px;
+}
+
+.form-section form {
+    padding: 0;
+}
+
+.social-links {
+    margin-top: -8px;
+}
+  .social-links a{
+    width: 30px;
+    height: 30px;
   }
 }
 

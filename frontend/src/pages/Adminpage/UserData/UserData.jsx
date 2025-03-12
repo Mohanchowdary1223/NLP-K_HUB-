@@ -28,6 +28,10 @@ const Navbar = () => (
 );
 
 const UserData = () => {
+  // Add new state for delete confirmation
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
+
   const [users, setUsers] = useState([]); // State to store fetched users
   const [selectedUser, setSelectedUser] = useState(null);
   const [activeTab, setActiveTab] = useState("images");
@@ -120,6 +124,31 @@ const UserData = () => {
 
   const handleMediaClick = (media, type) => {
     setSelectedMedia({ ...media, type });
+  };
+
+  // Add delete handler functions
+  const handleDeleteClick = (user, e) => {
+    e.stopPropagation();
+    setUserToDelete(user);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    try {
+      // Add your delete API call here
+      // Example:
+      // await fetch(`http://localhost:5000/admin/delete-user/${userToDelete._id}`, {
+      //   method: 'DELETE',
+      //   credentials: 'include',
+      // });
+      
+      setUsers(users.filter(user => user._id !== userToDelete._id));
+      setShowDeleteConfirm(false);
+      setUserToDelete(null);
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      // Handle error appropriately
+    }
   };
 
   // Add this function to handle PDF display
@@ -253,7 +282,11 @@ const MessagesSection = ({ user }) => {
                   <p>{user.name}</p>
                   <p>{user.email}</p>
                   <div className="actions" onClick={(e) => e.stopPropagation()}>
-                    <FaTrash className="delete-icon-a" title="Delete" />
+                    <FaTrash 
+                      className="delete-icon-a" 
+                      title="Delete" 
+                      onClick={(e) => handleDeleteClick(user, e)}
+                    />
                   </div>
                 </div>
               ))
@@ -505,6 +538,24 @@ const MessagesSection = ({ user }) => {
                   className="media-preview-audio"
                 />
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Add Delete Confirmation Popup */}
+        {showDeleteConfirm && (
+          <div className="popup-overlay" onClick={() => setShowDeleteConfirm(false)}>
+            <div className="delete-confirmation-popup" onClick={e => e.stopPropagation()}>
+              <h3>Confirm Action</h3>
+              <p>Are you sure you want to deactivate or delete this user account?</p>
+              <div className="delete-confirmation-buttons">
+                <button className="confirm-button" onClick={handleDeleteConfirm}>
+                  Yes
+                </button>
+                <button className="cancel-button" onClick={() => setShowDeleteConfirm(false)}>
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
         )}
