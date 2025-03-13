@@ -60,10 +60,22 @@ function ImageToText() {
                 throw new Error(result.error);
             }
 
-            setConvertedText(result.extracted_text || '');
+            // Handle table OCR response
+            if (model === 'tableocr') {
+                if (result.table_data) {
+                    // Format table data into readable text
+                    const rows = Object.values(result.table_data);
+                    const formattedText = rows.map(row => row.join('\t')).join('\n');
+                    setConvertedText(formattedText);
+                } else {
+                    setConvertedText(result.extracted_text || 'No text could be extracted');
+                }
+            } else {
+                setConvertedText(result.extracted_text || '');
+            }
+            
             setIsVisible(true);
-            // Add scroll after text is set
-            setTimeout(scrollToBottom, 100); // Small delay to ensure state is updated
+            setTimeout(scrollToBottom, 100);
             
         } catch (error) {
             console.error('Error:', error);

@@ -218,6 +218,7 @@ def translate_text():
 @app.route('/upload-image', methods=['POST'])
 @login_required
 def upload_image():
+    temp_file = None
     try:
         if 'image' not in request.files:
             return jsonify({"error": "No image file uploaded"}), 400
@@ -226,61 +227,67 @@ def upload_image():
         if file.filename == '':
             return jsonify({"error": "No file selected"}), 400
 
-        # Read file content once
-        file_content = file.read()
-        
-        # Store in GridFS
-        file_id = fs.put(
-            file_content,
-            filename=secure_filename(file.filename),
-            content_type=file.content_type
-        )
+        # Create temporary file
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1])
+        try:
+            # Save uploaded file to temp file
+            file.save(temp_file.name)
+            temp_file.close()  # Close the file before processing
 
-        # Create a temporary file for processing
-        import tempfile
-        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
-            temp_file.write(file_content)
-            temp_path = temp_file.name
+            # Get selected model
+            model = request.form.get('model', 'simple')
 
-        # Get selected model
-        model = request.form.get('model', 'simple')  # Default to simple if not specified
+            # Process image based on model
+            if model == "gemini":
+                result = process_gemini_image(temp_file.name)
+            elif model == "tableocr":
+                result = extract_table_data(temp_file.name)
+            else:
+                result = process_image(temp_file.name)
 
-        # Process image based on model
-        if model == "gemini":
-            result = process_gemini_image(temp_path)
-        elif model == "simple":
-            result = process_image(temp_path)
-        else:
-            result = extract_table_data(temp_path)
+            if result.get("error"):
+                raise Exception(result["error"])
 
-        # Clean up temporary file
-        os.unlink(temp_path)
+            # Store in GridFS
+            file.seek(0)
+            file_id = fs.put(
+                file,
+                filename=secure_filename(file.filename),
+                content_type=file.content_type
+            )
 
-        # Store metadata in MongoDB
-        multimedia_collection.insert_one({
-            'email': current_user.email,
-            'file_id': str(file_id),
-            'filename': secure_filename(file.filename),
-            'type': 'image',
-            'content_type': file.content_type,
-            'extracted_text': result.get("extracted_text", ""),
-            'classified_data': result.get("classified_data", {}),
-            'saved_data': result.get("saved_data", {}),
-            'timestamp': time.time()
-        })
+            # Store metadata
+            metadata = {
+                'email': current_user.email,
+                'file_id': str(file_id),
+                'filename': secure_filename(file.filename),
+                'type': 'image',
+                'model_used': model,
+                'content_type': file.content_type,
+                'extracted_text': result.get('extracted_text', ''),
+                'timestamp': time.time()
+            }
 
-        return jsonify({
-            "status": "success",
-            "file_id": str(file_id),
-            "extracted_text": result.get("extracted_text", ""),
-            "classified_data": result.get("classified_data", {}),
-            "saved_data": result.get("saved_data", {})
-        })
+            if model == "tableocr":
+                metadata['table_data'] = result.get('table_data', {})
+                metadata['is_table'] = True
+            else:
+                metadata['classified_data'] = result.get('classified_data', {})
+                metadata['is_table'] = False
+
+            multimedia_collection.insert_one(metadata)
+            return jsonify(result)
+
+        finally:
+            # Clean up temp file
+            try:
+                os.unlink(temp_file.name)
+            except Exception as e:
+                print(f"Error cleaning up temp file: {e}")
 
     except Exception as e:
         print("Error during image processing:", str(e))
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
-
 
 
 # Route for uploading and processing audio
