@@ -527,6 +527,11 @@ input:focus~label {
   .toggle-button {
       margin-top: -20px;
   }
+
+  .forgot-password-form {
+    width: 350px;
+    padding: 1.5rem;
+  }
 }
 
 
@@ -581,6 +586,31 @@ input:focus~label {
       margin: 0;
   }
 
+  .forgot-password-form {
+    width: 320px;
+    padding: 1.2rem;
+  }
+
+  .forgot-password-form h2 {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+  }
+
+  .forgot-password-form .input-field input {
+    padding: 0.6rem 0.8rem;
+    font-size: 0.9rem;
+  }
+
+  .verify-btn {
+    padding: 0.6rem;
+    font-size: 0.9rem;
+  }
+
+  .success-message {
+    font-size: 14px;
+    padding: 8px;
+    color: #4CAF50;
+  }
 }
 
 
@@ -683,7 +713,41 @@ input:focus~label {
 
   }
 
+  .forgot-password-form {
+    width: 280px;
+    padding: 1rem;
+  }
 
+  .forgot-password-form h2 {
+    font-size: 1.1rem;
+  }
+
+  .forgot-password-form .input-field {
+    margin-bottom: 0.8rem;
+  }
+
+  .verification-box label {
+    font-size: 0.85rem;
+  }
+
+  .error-message,
+  .verification-message,
+  .otp-success-message,
+  .password-success-message {
+    font-size: 0.85rem;
+    padding: 6px;
+  }
+
+  .forgot-close-icon {
+    font-size: 20px;
+    top: 8px;
+    right: 8px;
+  }
+
+  .success-message {
+    font-size: 12px;
+    padding: 6px;
+  }
 }
 
 
@@ -787,6 +851,37 @@ input:focus~label {
     width: 30px;
     height: 30px;
   }
+
+  .forgot-password-form {
+    width: 250px;
+    padding: 0.8rem;
+  }
+
+  .forgot-password-form h2 {
+    font-size: 1rem;
+  }
+
+  .forgot-password-form .input-field input {
+    padding: 0.5rem 0.6rem;
+    font-size: 0.8rem;
+  }
+
+  .verification-box label {
+    font-size: 0.8rem;
+  }
+
+  .verify-btn {
+    padding: 0.5rem;
+    font-size: 0.8rem;
+  }
+
+  .error-message,
+  .verification-message,
+  .otp-success-message,
+  .password-success-message {
+    font-size: 0.8rem;
+    padding: 5px;
+  }
 }
 
 @media screen and (max-width: 320px) {
@@ -794,6 +889,9 @@ input:focus~label {
       font-size: 9px;
   }
 
+  .forgot-password-form {
+    width: 230px;
+  }
 }
 
 .verification-message {
@@ -935,4 +1033,68 @@ input:focus~label {
   text-align: center;
   opacity: 1;
   transition: opacity 0.3s ease-in-out;
+}
+
+/* ...existing code... */
+
+.verification-box.success label {
+  color: #4CAF50;
+  font-weight: 500;
+}
+
+.verification-box.success input[type="checkbox"] {
+  accent-color: #4CAF50;
+}
+
+.verification-box.success {
+  background-color: rgba(76, 175, 80, 0.1);
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(76, 175, 80, 0.2);
+}
+
+.verification-message.success {
+  color: #4CAF50;
+  background-color: rgba(76, 175, 80, 0.1);
+  padding: 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.success-message {
+  color: #4CAF50;
+  background-color: rgba(76, 175, 80, 0.1);
+  padding: 10px;
+  border-radius: 4px;
+  margin: 10px 0;
+  text-align: center;
+  font-weight: 500;
+  animation: fadeIn 0.3s ease-in-out;
+  border: 1px solid rgba(76, 175, 80, 0.2);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Add these media queries for responsiveness */
+@media screen and (max-width: 768px) {
+  .success-message {
+    font-size: 14px;
+    padding: 8px;
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .success-message {
+    font-size: 12px;
+    padding: 6px;
+  }
 }

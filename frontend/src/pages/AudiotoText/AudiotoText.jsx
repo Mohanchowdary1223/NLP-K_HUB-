@@ -161,19 +161,19 @@ function AudioToText() {
             </div>
 
             {isVisible && (
-                <div className="converted-text-section1">
+                <div className="converted-text-section1a">
                     <h3>Here is the converted text</h3>
                     <button
-                        className={`copy-btn1 ${isCopied ? 'copied' : ''}`}
+                        className={`copy-btn1a ${isCopied ? 'copied' : ''}`}
                         onClick={handleCopy}
                     >
                         {isCopied ? 'Copied!' : 'Copy'}
                     </button>
                     {convertedText ? (
-                        <div className="converted-text1">
+                        <div className="converted-text1a">
                             <p>{convertedText}</p>
                             {Object.keys(classifiedData).length > 0 && (
-                                <div className="classified-data">
+                                <div className="classified-dataa">
                                     <h4>Classified Information:</h4>
                                     <ul>
                                         {Object.entries(classifiedData).map(([category, text]) => (

@@ -78,7 +78,7 @@ input[type="file"] {
   transform: translateY(-2px);
 }
 
-.converted-text-section1 {
+.converted-text-section10 {
   width: 100vw;
   height: auto;
   background-color: #2f2f2f;
@@ -88,48 +88,47 @@ input[type="file"] {
   align-items: center;
   justify-content: center;
   position: relative;
-  padding: 50px;
+  padding: 10px;
 }
 
-.converted-text-section1 h3 {
+.converted-text-section10 h3 {
   font-size: 24px;
   color: #2dc5b8;
   margin-bottom: 10px;
   margin-top: 10px;
 }
 
-.converted-text1 {
+.converted-text10 {
   background-color: #f0f0f0;
   box-shadow: 0 40px 80px rgba(255, 255, 255, 0.2);
-
   padding: 20px;
   margin-top: 10px;
   position: relative;
-  min-height: 100px;
+  min-height: 150px;
   max-height: 500px;
   overflow-y: auto;
   white-space: pre-wrap;
   word-wrap: break-word;
-  color: #004d4d;
+  color: #000;
   scrollbar-width: thin;
   scrollbar-color: #2dc5b8 #c1f0ec;
   width: 100%;
 }
 
-.converted-text1::-webkit-scrollbar {
+.converted-text10::-webkit-scrollbar {
   width: 8px;
 }
 
-.converted-text1::-webkit-scrollbar-thumb {
+.converted-text10::-webkit-scrollbar-thumb {
   background-color: #2dc5b8;
   border-radius: 4px;
 }
 
-.converted-text1::-webkit-scrollbar-track {
+.converted-text10::-webkit-scrollbar-track {
   background-color: #c1f0ec;
 }
 
-.copy-btn1 {
+.copy-btn1i {
   background-color: #2dc5b8;
   color: white;
   padding: 8px 15px;
@@ -142,7 +141,7 @@ input[type="file"] {
   transition: all 0.3s ease;
 }
 
-.copy-btn1:hover {
+.copy-btn1i:hover {
   background-color: #26b0a4;
 }
 
@@ -168,7 +167,7 @@ input[type="file"] {
   gap: 10px;
   margin-top: 20px;
 }
-.copy-btn1.copied {
+.copy-btn1i.copied {
   background-color: #005f51;
   color: white;
 }
@@ -211,7 +210,7 @@ input[type="file"] {
 
 /* Regular Desktops (1200px to 1439px) */
 @media (max-width: 1439px) and (min-width: 1200px) {
-  .converted-text-section1 {
+  .converted-text-section10 {
     width: 100%;
   }
 }
@@ -229,7 +228,7 @@ input[type="file"] {
     max-width: 700px;
   }
 
-  .converted-text-section1 h3 {
+  .converted-text-section10 h3 {
     font-size: 20px;
   }
 }
@@ -251,12 +250,12 @@ input[type="file"] {
     width: 80%;
   }
 
-  .converted-text-section1 {
+  .converted-text-section10 {
     width: 90%;
     padding: 30px 20px;
   }
 
-  .converted-text1 {
+  .converted-text10 {
     max-height: 350px;
   }
 
@@ -291,16 +290,16 @@ input[type="file"] {
     font-size: 18px;
   }
 
-  .converted-text-section1 {
+  .converted-text-section10 {
     padding: 30px 15px;
   }
 
-  .converted-text1 {
+  .converted-text10 {
     max-height: 300px;
     padding: 15px;
   }
 
-  .copy-btn1 {
+  .copy-btn1i {
     top: 15px;
     right: 15px;
   }
@@ -323,23 +322,24 @@ input[type="file"] {
     font-size: 16px;
   }
 
-  .converted-text-section1 {
+  .converted-text-section10 {
     padding: 20px 15px;
     margin-top: 50px;
   }
 
-  .converted-text-section1 h3 {
+  .converted-text-section10 h3 {
     font-size: 18px;
+
   }
 
-  .converted-text1 {
+  .converted-text10 {
     max-height: 500px;
     padding: 12px;
     font-size: 14px;
   }
 
-  .copy-btn1 {
-    padding: 6px 12px;
+  .copy-btn1i {
+    padding: 5px 5px;
     font-size: 14px;
   }
 
@@ -378,8 +378,8 @@ input[type="file"] {
     font-size: 14px;
   }
 
-  .converted-text-section1 h3 {
-    font-size: 16px;
+  .converted-text-section10 h3 {
+    font-size: 15px;
   }
 
   .buttons button {
@@ -391,16 +391,16 @@ input[type="file"] {
 /* Print Media Query */
 @media print {
   .buttons,
-  .copy-btn1 {
+  .copy-btn1i {
     display: none;
   }
 
-  .converted-text-section1 {
+  .converted-text-section10 {
     background-color: white;
     color: black;
   }
 
-  .converted-text1 {
+  .converted-text10 {
     background-color: white;
     color: black;
     border: 1px solid #ddd;

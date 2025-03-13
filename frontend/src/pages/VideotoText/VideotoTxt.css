@@ -273,6 +273,78 @@ input[type="file"] {
   color: white;
 }
 
+.converted-text-section1v {
+  width: 100vw;
+  height: auto;
+  background-color: #2f2f2f;
+  display: flex;
+  flex-direction: column;
+  color: white;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 10px;
+}
+
+.converted-text-section1v h3 {
+  font-size: 24px;
+  color: #2dc5b8;
+  margin-bottom: 10px;
+  margin-top: 10px;
+}
+
+.converted-text1v {
+  background-color: #f0f0f0;
+  box-shadow: 0 40px 80px rgba(255, 255, 255, 0.2);
+  padding: 20px;
+  margin-top: 10px;
+  position: relative;
+  min-height: 150px;
+  max-height: 500px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  color: #000;
+  scrollbar-width: thin;
+  scrollbar-color: #2dc5b8 #c1f0ec;
+  width: 100%;
+}
+
+.converted-text1v::-webkit-scrollbar {
+  width: 8px;
+}
+
+.converted-text1v::-webkit-scrollbar-thumb {
+  background-color: #2dc5b8;
+  border-radius: 4px;
+}
+
+.converted-text1v::-webkit-scrollbar-track {
+  background-color: #c1f0ec;
+}
+
+.copy-btn1v {
+  background-color: #2dc5b8;
+  color: white;
+  padding: 8px 15px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  position: absolute;
+  top: 10px;
+  right: 20px;
+  transition: all 0.3s ease;
+}
+
+.copy-btn1v:hover {
+  background-color: #26b0a4;
+}
+
+.copy-btn1v.copied {
+  background-color: #005f51;
+  color: white;
+}
+
 /* Responsive Design */
 @media (max-width: 1439px) {
   .video-area {

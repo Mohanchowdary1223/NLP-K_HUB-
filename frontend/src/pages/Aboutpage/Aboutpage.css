@@ -169,10 +169,14 @@
     /* Ensures everything stays within the border */
     width: 85%;
     margin-left: 110px;
+    gap: 10px;
+
   }
   
   .stat-box {
-    background: #ffffff;
+    background: #f3f3f3;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+cursor: pointer;
     /* White background */
     padding: 30px 20px;
     /* Adjust padding for spacing */

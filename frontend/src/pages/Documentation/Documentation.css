@@ -175,3 +175,76 @@
   height: 100%;
   object-fit: contain;
 }
+
+/* New styles for converted text section */
+.converted-text-section1s {
+  width: 100vw;
+  height: auto;
+  background-color: #2f2f2f;
+  display: flex;
+  flex-direction: column;
+  color: white;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 10px;
+}
+
+.converted-text-section1s h3 {
+  font-size: 24px;
+  color: #2dc5b8;
+  margin-bottom: 10px;
+  margin-top: 10px;
+}
+
+.converted-text1s {
+  background-color: #f0f0f0;
+  box-shadow: 0 40px 80px rgba(255, 255, 255, 0.2);
+  padding: 20px;
+  margin-top: 10px;
+  position: relative;
+  min-height: 150px;
+  max-height: 500px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  color: #000;
+  scrollbar-width: thin;
+  scrollbar-color: #2dc5b8 #c1f0ec;
+  width: 100%;
+}
+
+.converted-text1s::-webkit-scrollbar {
+  width: 8px;
+}
+
+.converted-text1s::-webkit-scrollbar-thumb {
+  background-color: #2dc5b8;
+  border-radius: 4px;
+}
+
+.converted-text1s::-webkit-scrollbar-track {
+  background-color: #c1f0ec;
+}
+
+.copy-btn1s {
+  background-color: #2dc5b8;
+  color: white;
+  padding: 8px 15px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  position: absolute;
+  top: 10px;
+  right: 20px;
+  transition: all 0.3s ease;
+}
+
+.copy-btn1s:hover {
+  background-color: #26b0a4;
+}
+
+.copy-btn1s.copied {
+  background-color: #005f51;
+  color: white;
+}

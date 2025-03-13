@@ -86,10 +86,11 @@ const Aboutpage = () => {
             data to create impactful change.
             <br />
           </p>
-
-          <button className="cta-button">
-            GET IN TOUCH <span>&#8594;</span>
-          </button>
+          <Link to="/contact">
+            <button className="cta-button">
+              GET IN TOUCH <span>&#8594;</span>
+            </button>
+          </Link>
         </div>
       </div>
 
@@ -117,40 +118,48 @@ const Aboutpage = () => {
 
         <div className="stats-section">
           <div className="stat-box">
-            <h3>Img2Txt</h3>
-            <p>
-              <strong>From Image to Insight</strong>
-              <br />
-              Converting images to text with precision using advanced AI
-              technology.
-            </p>
+            <Link to="/image-to-text">
+              <h3>Img2Txt</h3>
+              <p>
+                <strong>From Image to Insight</strong>
+                <br />
+                Converting images to text with precision using advanced AI
+                technology.
+              </p>
+            </Link>
           </div>
           <div className="stat-box">
-            <h3>Vid2Txt</h3>
-            <p>
-              <strong>Capturing Video in Words</strong>
-              <br />
-              Converting videos into text accurately with advanced AI
-              technology.
-            </p>
+            <Link to="/video-to-text">
+              <h3>Vid2Txt</h3>
+              <p>
+                <strong>Capturing Video in Words</strong>
+                <br />
+                Converting videos into text accurately with advanced AI
+                technology.
+              </p>
+            </Link>
           </div>
           <div className="stat-box">
-            <h3>Aud2Txt</h3>
-            <p>
-              <strong>Turning Sound into Text</strong>
-              <br />
-              Transforming audio into text efficiently using cutting-edge AI
-              tools.
-            </p>
+            <Link to="/audio-to-text">
+              <h3>Aud2Txt</h3>
+              <p>
+                <strong>Turning Sound into Text</strong>
+                <br />
+                Transforming audio into text efficiently using cutting-edge AI
+                tools.
+              </p>
+            </Link>
           </div>
           <div className="stat-box">
-            <h3>TransLang</h3>
-            <p>
-              <strong>Bridging Language Gaps</strong>
-              <br />
-              Bridging language gaps through seamless and precise AI
-              translations
-            </p>
+            <Link to="/language-translator">
+              <h3>TransLang</h3>
+              <p>
+                <strong>Bridging Language Gaps</strong>
+                <br />
+                Bridging language gaps through seamless and precise AI
+                translations
+              </p>
+            </Link>
           </div>
         </div>
       </div>

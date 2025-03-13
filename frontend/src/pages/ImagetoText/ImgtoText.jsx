@@ -119,9 +119,9 @@ function ImageToText() {
                         onChange={(e) => setModel(e.target.value)} 
                         className="select-model-lable"
                     >
-                        <option value="simple">Simple OCR</option>
-                        <option value="gemini">Gemini OCR</option>
-                        <option value="tableocr">Table OCR</option>
+                        <option value="simple">Textract</option>
+                        <option value="gemini">Accurio</option>
+                        <option value="tableocr">Tabularis</option>
                     </select>
                 </div>
 
@@ -155,16 +155,16 @@ function ImageToText() {
             <div className='r'>
                             
             {isVisible && (
-                <div className="converted-text-section1">
+                <div className="converted-text-section10">
                     <h3>Here is the converted text</h3>
                     <button
-                        className={`copy-btn1 ${isCopied ? 'copied' : ''}`}
+                        className={`copy-btn1i ${isCopied ? 'copied' : ''}`}
                         onClick={handleCopy}
                     >
                         {isCopied ? 'Copied!' : 'Copy'}
                     </button>
                     {convertedText ? (
-                        <div className="converted-text1">
+                        <div className="converted-text10">
                             <p>{convertedText}</p>
                         </div>
                     ) : (

@@ -33,6 +33,10 @@ const Landingpage = () => {
   const [otpVerificationMessage, setOtpVerificationMessage] = useState("");
   const [verificationStatus, setVerificationStatus] = useState(""); // "success" or "error"
   const [passwordChangeMessage, setPasswordChangeMessage] = useState("");
+  const [signupSuccess, setSignupSuccess] = useState(false);
+  const [signinSuccess, setSigninSuccess] = useState(false);
+  const [signupError, setSignupError] = useState("");
+  const [signinError, setSigninError] = useState("");
 
   const navigate = useNavigate();
 
@@ -60,47 +64,55 @@ const Landingpage = () => {
 
   const handleSignup = async () => {
     setLoading(true);
+    setSignupError("");
     try {
       const response = await axios.post("http://localhost:5000/auth/api/signup", signupData, {
         withCredentials: true,
       });
       if (response.data.success) {
-        alert("Signup successful!");
-        setPanelActive(false);
+        setSignupSuccess(true);
+        setTimeout(() => {
+          setSignupSuccess(false);
+          setPanelActive(false);
+          setSignupData({ name: '', email: '', password: '' });
+        }, 2000);
       } else {
-        alert("Signup failed: " + response.data.message);
+        setSignupError("Email is already registered");
+        setTimeout(() => setSignupError(""), 3000);
       }
     } catch (error) {
-      console.error("Signup error:", error);
-      alert("Signup failed.");
+      setSignupError("Signup failed. Please try again.");
+      setTimeout(() => setSignupError(""), 3000);
     } finally {
       setLoading(false);
-      setSignupData({ name: '', email: '', password: '' });
     }
   };
 
   const handleSignin = async () => {
     setLoading(true);
+    setSigninError("");
     try {
       const response = await axios.post("http://localhost:5000/auth/api/signin", signinData, {
         withCredentials: true,
       });
 
       if (response.data.success) {
-        // Check if the email is admin@gmail.com
-        if (signinData.email === "admin@gmail.com") {
-          alert("Admin login successful!");
-          navigate("/userdata"); // Navigate to /userdata for admin
-        } else {
-          alert("Login successful!");
-          navigate("/about"); // Navigate to /about for non-admin users
-        }
+        setSigninSuccess(true);
+        setTimeout(() => {
+          setSigninSuccess(false);
+          if (signinData.email === "admin@gmail.com") {
+            navigate("/userdata");
+          } else {
+            navigate("/about");
+          }
+        }, 2000);
       } else {
-        alert("Login failed: Incorrect email or password.");
+        setSigninError("Email or password is incorrect");
+        setTimeout(() => setSigninError(""), 3000);
       }
     } catch (error) {
-      console.error("Login error:", error);
-      alert("Login failed: Network error or incorrect credentials.");
+      setSigninError("Email or password is incorrect");
+      setTimeout(() => setSigninError(""), 3000);
     } finally {
       setLoading(false);
     }
@@ -327,6 +339,12 @@ const handleChangePassword = async () => {
                 <div className="input-field">
                   <input type="password" name="password" placeholder="Password" onChange={handleSignupChange} />
                 </div>
+                {signupError && <div className="error-message">{signupError}</div>}
+                {signupSuccess && (
+                  <div className="success-message">
+                    Signup successful! 
+                  </div>
+                )}
                 <button className="sign" type="submit" disabled={loading}>
                   {loading ? "Signing Up..." : "Sign Up"}
                 </button>
@@ -351,6 +369,12 @@ const handleChangePassword = async () => {
                 <a href="#" className="forgot-password" onClick={toggleForgotPassword}>
                   Forgot your password?
                 </a>
+                {signinError && <div className="error-message">{signinError}</div>}
+                {signinSuccess && (
+                  <div className="success-message">
+                    Login successful! 
+                  </div>
+                )}
                 <button className="sign" type="submit" disabled={loading}>
                   {loading ? "Signing In..." : "Sign In"}
                 </button>

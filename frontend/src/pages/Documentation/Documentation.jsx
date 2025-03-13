@@ -152,10 +152,10 @@ function VideoToText() {
       </div>
 
       {isVisible && (
-        <div className="converted-text-section1">
+        <div className="converted-text-section1s">
           <h3>KEY NOTES</h3>
           <button
-            className={`copy-btn1 ${isCopied ? 'copied' : ''}`}
+            className={`copy-btn1s ${isCopied ? 'copied' : ''}`}
             onClick={handleCopy}
           >
             {isCopied ? 'Copied!' : 'Copy'}
@@ -164,7 +164,7 @@ function VideoToText() {
             <p>Processing...</p>
           ) : (
             convertedText ? (
-              <div className="converted-text1">
+              <div className="converted-text1s">
                 <p>{convertedText}</p>
               </div>
             ) : (
