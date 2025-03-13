@@ -1273,7 +1273,22 @@ messages-list::-webkit-scrollbar-thumb:hover {
   color: #666;
   margin-bottom: 1.5rem;
 }
-
+.button-uploads{
+  width: 60px;
+  height: 25px;
+  color: white;
+  font-weight: bold;
+  border-radius: 5px;
+  cursor: pointer;
+  border: none;
+  background-color:#95c11f;
+  font-size: 10px;
+}
+.button-uploads:hover{
+  background-color: #ffff;
+  color: #95c11f;
+  border-color: #000;
+}
 .delete-confirmation-buttons {
   display: flex;
   justify-content: center;
@@ -1307,3 +1322,30 @@ messages-list::-webkit-scrollbar-thumb:hover {
 .cancel-button:hover {
   background-color: #5a6268;
 }
+
+
+
+.button-uploads {
+  width: 80px  ;
+  height: 30px;
+  color: white;
+  font-weight: bold;
+  border-radius: 5px;
+  cursor: pointer;
+  border: none;
+  background-color: #95c11f;
+  font-size: 10px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.button-uploads:hover {
+  background-color: #fff;
+  color: #95c11f;
+  border: 1px solid #95c11f;
+}
+
+/* Responsive Design */

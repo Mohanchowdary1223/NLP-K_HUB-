@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -31,22 +31,40 @@ ChartJS.register(
 
 const UserReport = () => {
   const [reportType, setReportType] = useState('overall');
+  const [userData, setUserData] = useState(null);
+
+  useEffect(() => {
+    fetchUserGrowthData();
+  }, [reportType]);
+
+  const fetchUserGrowthData = async () => {
+    try {
+      const response = await fetch(`http://localhost:5000/user-growth?type=${reportType}`, {
+        credentials: 'include'
+      });
+      const data = await response.json();
+      setUserData(data);
+    } catch (error) {
+      console.error('Error fetching user growth data:', error);
+    }
+  };
 
   const getChartData = () => {
-    const periods = {
-      weekly: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-      monthly: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-      overall: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']
-    };
-    return {
-      labels: periods[reportType],
+    if (!userData) return {
+      labels: [],
       datasets: [{
         label: 'Total Users',
-        data: reportType === 'weekly' 
-          ? [65, 75, 85, 95, 80, 70, 90]
-          : reportType === 'monthly'
-          ? [280, 320, 350, 300]
-          : [1200, 1500, 1800, 2200, 2500, 2800],
+        data: [],
+        borderColor: 'rgb(75, 192, 192)',
+        backgroundColor: 'rgba(75, 192, 192, 0.5)',
+      }]
+    };
+
+    return {
+      labels: userData.labels,
+      datasets: [{
+        label: 'Total Users',
+        data: userData.userCounts,
         borderColor: 'rgb(75, 192, 192)',
         backgroundColor: 'rgba(75, 192, 192, 0.5)',
       }]

@@ -31,6 +31,7 @@ const UserData = () => {
   // Add new state for delete confirmation
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
+  const [showUploadsPopup, setShowUploadsPopup] = useState(false); // Add this state
 
   const [users, setUsers] = useState([]); // State to store fetched users
   const [selectedUser, setSelectedUser] = useState(null);
@@ -116,10 +117,15 @@ const UserData = () => {
 
   const handleUserClick = (user) => {
     if (!user.isEditing) {
-        console.log('Full user data:', user); // Debug log
-        setSelectedUser(user); // Use the entire user object directly
-        setActiveTab("images");
+      setSelectedUser(user);
     }
+  };
+
+  // Add new handler for All Uploads button
+  const handleUploadsClick = (e, user) => {
+    e.stopPropagation(); // Prevent row click event
+    setSelectedUser(user);
+    setShowUploadsPopup(true);
   };
 
   const handleMediaClick = (media, type) => {
@@ -135,19 +141,30 @@ const UserData = () => {
 
   const handleDeleteConfirm = async () => {
     try {
-      // Add your delete API call here
-      // Example:
-      // await fetch(`http://localhost:5000/admin/delete-user/${userToDelete._id}`, {
-      //   method: 'DELETE',
-      //   credentials: 'include',
-      // });
-      
-      setUsers(users.filter(user => user._id !== userToDelete._id));
+      const response = await fetch(`http://localhost:5000/admin/delete-user/${userToDelete.email}`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete user');
+      }
+
+      const data = await response.json();
+      console.log('Delete response:', data);
+
+      // Remove user from local state
+      setUsers(users.filter(user => user.email !== userToDelete.email));
       setShowDeleteConfirm(false);
       setUserToDelete(null);
     } catch (error) {
       console.error('Error deleting user:', error);
-      // Handle error appropriately
+      alert('Failed to delete user. Please try again.');
     }
   };
 
@@ -234,6 +251,15 @@ const MessagesSection = ({ user }) => {
   );
 };
 
+  // Add this function to calculate total uploads
+  const calculateTotalUploads = (user) => {
+    const totalImages = user.images?.length || 0;
+    const totalVideos = user.videos?.length || 0;
+    const totalAudios = user.audios?.length || 0;
+    const totalDocs = user.documentation?.length || 0;
+    return totalImages + totalVideos + totalAudios + totalDocs;
+  };
+
   // Add loading and error states to the render
   if (loading) {
     return <div className="loading">Loading user data...</div>;
@@ -256,6 +282,7 @@ const MessagesSection = ({ user }) => {
               <b>Profile</b>
               <b>Name</b>
               <b>Email</b>
+              <b>Uploads</b>
               <b>Actions</b>
             </div>
 
@@ -281,6 +308,12 @@ const MessagesSection = ({ user }) => {
                   </div>
                   <p>{user.name}</p>
                   <p>{user.email}</p>
+                  <button 
+                    className="button-uploads"
+                    onClick={(e) => handleUploadsClick(e, user)}
+                  >
+                    All Uploads ({calculateTotalUploads(user)})
+                  </button>
                   <div className="actions" onClick={(e) => e.stopPropagation()}>
                     <FaTrash 
                       className="delete-icon-a" 
@@ -299,8 +332,8 @@ const MessagesSection = ({ user }) => {
         </div>
 
         {/* User Details Popup */}
-        {selectedUser && (
-          <div className="popup-overlay" onClick={() => setSelectedUser(null)}>
+        {selectedUser && showUploadsPopup && (
+          <div className="popup-overlay" onClick={() => setShowUploadsPopup(false)}>
             <div className="popup-content" onClick={(e) => e.stopPropagation()}>
               <button
                 className="close-popup"
