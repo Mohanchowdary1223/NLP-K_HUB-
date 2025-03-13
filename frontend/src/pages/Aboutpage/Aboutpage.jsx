@@ -268,11 +268,27 @@ const Aboutpage = () => {
 
       {/* New Hero Container Section */}
       <div className="hero-container">
-        <h1 className="hero-title">
-          Ready to <span className="highlight">Transform</span> Your DeFi Vision
-          <br /> into <span className="highlight">Reality?</span>
-        </h1>
-        <p className="hero-subtext">Schedule a call now!</p>
+        <p className="hero-title">
+Synopsis
+        </p>
+        <p className="hero-subtext">          A synopsis is a brief, concise summary of a larger work, such as a
+          book, movie, research paper, or play, designed to provide an overview
+          of its main points, themes, and key elements. It serves as a snapshot,
+          allowing readers or audiences to quickly grasp the essence of the work
+          without delving into the full content. Typically, a synopsis includes
+          the central plot or argument, main characters or key players,
+          significant themes, and the climax or key findings, all while
+          maintaining clarity and brevity. Whether used to pitch a manuscript to
+          publishers, summarize academic research, or describe a film’s
+          storyline, a well-crafted synopsis captures the spirit of the original
+          work and communicates its core ideas effectively, making it an
+          invaluable tool across various fields.</p>
+
+          <Link to="/documentation">
+              <button className="cta-button-doc">
+                Wanna Try <span>&#8594;</span>
+              </button>
+            </Link>
       </div>
 
       <Footer />
