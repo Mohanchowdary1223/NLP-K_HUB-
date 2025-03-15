@@ -266,22 +266,18 @@ const Aboutpage = () => {
         </div>
       </div>
 
-      {/* New Hero Container Section */}
       <div className="hero-container">
-        <p className="hero-title">Synopsis</p>
-        <p className="hero-subtext">
-          A synopsis is a concise summary of a larger work, like a book, movie,
-          or research paper, highlighting its main points, themes, and key
-          elements. It provides a quick overview of the central plot,
-          characters, and significant ideas, making it useful for pitching,
-          summarizing, or describing works effectively.
-        </p>
-
+        <h4 className="hero-title">
+          A <span className="highlight">synopsis is a brief summary</span> of a
+          larger work, capturing its main points, themes, and key elements to
+          provide a <span className="highlight"> quick overview 
+          </span> of the plot, characters, or central ideas.
+        </h4>
         <Link to="/documentation">
           <button className="cta-button-doc">
             Wanna Try <span>&#8594;</span>
           </button>
-        </Link>
+        </Link>{" "}
       </div>
 
       <Footer />
