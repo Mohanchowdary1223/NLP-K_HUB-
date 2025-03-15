@@ -170,28 +170,48 @@ const UserData = () => {
 
   // Add this function to handle PDF display
   const renderPDFPreview = (doc) => {
-    console.log("Rendering PDF preview for document:", doc); // Debug log
-    if (!doc.file_id) {
-        console.log("No file_id found in document"); // Debug log
-        return null;
+    if (!doc || !doc.file_id) {
+        console.log("Invalid document or missing file_id:", doc);
+        return (
+            <div className="pdf-preview-error">
+                <p>Unable to load PDF preview</p>
+            </div>
+        );
     }
+
+    const pdfUrl = `http://localhost:5000/media/file/${doc.file_id}`;
     
     return (
         <div className="pdf-preview-container">
-            <h4>{doc.filename}</h4>
-            <iframe
-                src={`http://localhost:5000/media/file/${doc.file_id}`}
-                width="100%"
-                height="500px"
-                title={doc.filename}
-                className="pdf-preview"
-            />
+            <h4>{doc.filename || 'Untitled Document'}</h4>
+            <div className="pdf-viewer">
+                <iframe
+                    src={pdfUrl}
+                    width="100%"
+                    height="500px"
+                    title={doc.filename || 'PDF Document'}
+                    className="pdf-preview"
+                    style={{
+                        border: '1px solid #ccc',
+                        borderRadius: '4px',
+                        backgroundColor: '#f8f9fa'
+                    }}
+                />
+            </div>
             <div className="pdf-details">
-                {/* Add debug logs */}
-                {console.log("Summary:", doc.summary)}
-                {console.log("Extracted text:", doc.extracted_text)}
-                <p>Summary: {doc.summary || (doc.extracted_text ? doc.extracted_text.slice(0, 200) + '...' : 'No summary available')}</p>
-                <p>Uploaded: {new Date(doc.timestamp * 1000).toLocaleString()}</p>
+                <div className="summary-section">
+                    <h5>Summary</h5>
+                    <p>{doc.summary || 'No summary available'}</p>
+                </div>
+                <div className="metadata-section">
+                    <p>Uploaded: {doc.timestamp ? new Date(doc.timestamp * 1000).toLocaleString() : 'Date unknown'}</p>
+                    {doc.extracted_text && (
+                        <div className="extracted-text">
+                            <h5>Extracted Text</h5>
+                            <p>{doc.extracted_text.slice(0, 200)}...</p>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
@@ -199,21 +219,23 @@ const UserData = () => {
 
   // Modify the Synopsis Section to properly handle documentation files
   const SynopsisSection = ({ user }) => {
-    console.log("User documentation data:", user.documentation); // Debug log
+    if (!user || !user.documentation) {
+        return <div className="synopsis-list"><p className="no-data">No documentation available.</p></div>;
+    }
+
+    const validDocs = user.documentation.filter(doc => doc && doc.file_id);
+
+    if (validDocs.length === 0) {
+        return <div className="synopsis-list"><p className="no-data">No valid documentation found.</p></div>;
+    }
+
     return (
         <div className="synopsis-list">
-            {user.documentation && user.documentation.length > 0 ? (
-                user.documentation.map((doc, index) => {
-                    console.log("Processing document:", doc); // Debug log
-                    return (
-                        <div key={index} className="synopsis-item">
-                            {renderPDFPreview(doc)}
-                        </div>
-                    );
-                })
-            ) : (
-                <p className="no-data">No documentation found.</p>
-            )}
+            {validDocs.map((doc, index) => (
+                <div key={index} className="synopsis-item">
+                    {renderPDFPreview(doc)}
+                </div>
+            ))}
         </div>
     );
 };
@@ -652,6 +674,64 @@ export default UserData;
     text-align: center;
     color: #666;
     padding: 20px;
+  }
+
+  // Add these styles to your existing styles
+  .pdf-preview-container {
+    margin: 20px 0;
+    padding: 15px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+
+  .pdf-viewer {
+    margin: 15px 0;
+    min-height: 500px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .pdf-details {
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    margin-top: 15px;
+  }
+
+  .summary-section, .metadata-section {
+    margin-bottom: 15px;
+  }
+
+  .summary-section h5, .metadata-section h5 {
+    color: #333;
+    margin-bottom: 8px;
+  }
+
+  .pdf-preview-error {
+    padding: 20px;
+    text-align: center;
+    background: #fff3f3;
+    border: 1px solid #ffcdd2;
+    border-radius: 4px;
+    color: #d32f2f;
+  }
+
+  .synopsis-item {
+    margin-bottom: 30px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 20px;
+  }
+
+  .synopsis-item:last-child {
+    border-bottom: none;
+  }
+
+  .extracted-text {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
   }
 `}
 </style>
