@@ -98,7 +98,7 @@
     padding: 12px 24px;
     font-size: 1rem;
     font-weight: bold;
-    margin-top: 20px;
+    margin-top: 100px;
     text-transform: uppercase;
     border: none;
     border-radius: 5px;
@@ -723,7 +723,7 @@
     }
   
     .hero-subtext {
-      font-size: 15px;
+      font-size: 20px;
     }
   }
   
@@ -758,7 +758,7 @@
     }
   
     .hero-subtext {
-      font-size: 15px;
+      font-size: 20px;
     }
   
     .cta-button {
