@@ -156,7 +156,7 @@ const Contact = () => {
                     <iframe
                         className="map-iframe"
                         title="Google Map"
-                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3153.0252074649243!2d-122.41941558468151!3d37.77492977975992!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8085809c88ac67d3%3A0x5e2d00d3b685c605!2sSan%20Francisco%2C%20CA%2094102%2C%20USA!5e0!3m2!1sen!2sin!4v1692048992761!5m2!1sen!2sin"
+                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3819.2809637276446!2d82.23772427418872!3d16.812412083979993!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a38205e52dbce3d%3A0x794aa1538de4100f!2sKiet%20College!5e0!3m2!1sen!2sin!4v1742193265602!5m2!1sen!2sin"
                         width="100%"
                         height="350"
                         style={{ border: 0 }}

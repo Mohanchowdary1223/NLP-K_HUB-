@@ -99,7 +99,7 @@
   padding: 20px;
   margin: 20px auto;
   border-radius: 8px;
-  width: 50%;
+  width: 100%;
   margin-top: 100px; /* Reduced from 250px since we removed the tabs */
 }
 
@@ -111,7 +111,7 @@
 
 .charts-container {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 30px;
   margin-bottom: 40px;
 }
@@ -245,6 +245,10 @@
   .chart-wrapper {
     min-height: 250px;
     padding: 15px;
+  }
+  .charts-container{
+    display: flex;
+    flex-direction: column;
   }
 }
 

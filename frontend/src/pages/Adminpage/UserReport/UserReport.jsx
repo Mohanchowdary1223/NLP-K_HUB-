@@ -32,10 +32,12 @@ ChartJS.register(
 const UserReport = () => {
   const [userData, setUserData] = useState(null);
   const [uploadsData, setUploadsData] = useState(null);
+  const [totalUploadsData, setTotalUploadsData] = useState(null);
 
   useEffect(() => {
     fetchUserGrowthData();
     fetchUploadsData();
+    fetchTotalUploadsData();
   }, []);
 
   const fetchUserGrowthData = async () => {
@@ -64,6 +66,20 @@ const UserReport = () => {
     }
   };
 
+  const fetchTotalUploadsData = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/total-uploads', {
+        credentials: 'include'
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setTotalUploadsData(data);
+      }
+    } catch (error) {
+      console.error('Error fetching total uploads data:', error);
+    }
+  };
+
   const getChartData = () => {
     if (!userData) return {
       labels: [],
@@ -87,7 +103,7 @@ const UserReport = () => {
   };
 
   const getFeatureUsageData = () => {
-    if (!uploadsData) return {
+    if (!totalUploadsData) return {
       labels: ['Images', 'Videos', 'Audio', 'Translations', 'Synopsis'],
       datasets: [{
         label: 'Total Uploads',
@@ -115,11 +131,11 @@ const UserReport = () => {
       datasets: [{
         label: 'Total Uploads',
         data: [
-          uploadsData.image_count || 0,
-          uploadsData.video_count || 0,
-          uploadsData.audio_count || 0,
-          uploadsData.translation_count || 0,
-          uploadsData.documentation_count || 0,
+          totalUploadsData.image_count || 0,
+          totalUploadsData.video_count || 0,
+          totalUploadsData.audio_count || 0,
+          totalUploadsData.translation_count || 0,
+          totalUploadsData.documentation_count || 0,
         ],
         backgroundColor: [
           'rgba(255, 99, 132, 0.7)',

@@ -1367,6 +1367,27 @@ def delete_user(email):
         error_response.headers.add('Access-Control-Allow-Credentials', 'true')
         return error_response, 500
 
+@app.route('/total-uploads', methods=['GET'])
+def get_total_uploads():
+    try:
+        # Get all media counts
+        image_count = multimedia_collection.count_documents({'type': 'image'})
+        video_count = multimedia_collection.count_documents({'type': 'video'})
+        audio_count = multimedia_collection.count_documents({'type': 'audio'})
+        translation_count = translations_collection.count_documents({})
+        documentation_count = multimedia_collection.count_documents({'type': 'documentation'})
+
+        return jsonify({
+            'image_count': image_count,
+            'video_count': video_count,
+            'audio_count': audio_count,
+            'translation_count': translation_count,
+            'documentation_count': documentation_count
+        })
+    except Exception as e:
+        print(f"Error getting total uploads: {e}")
+        return jsonify({'error': str(e)}), 500
+
 @app.errorhandler(500)
 def internal_error(error):
     print(f"Internal error: {str(error)}")
