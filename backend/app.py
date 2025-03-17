@@ -20,6 +20,7 @@ from bson.objectid import ObjectId
 from gridfs import GridFS
 from extractive_summarization import extract_content_from_pdf, summarize_text
 import tempfile
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 
@@ -30,10 +31,10 @@ CORS(app,
     resources={
         r"/*": {  # Change from /auth/* to /* to cover all routes
             "origins": ["http://localhost:5173"],
-            "methods": ["GET", "POST", "OPTIONS"],
-            "allow_headers": ["Content-Type", "Authorization"],
+            "methods": ["GET", "POST", "DELETE", "OPTIONS"],  # Add DELETE method
+            "allow_headers": ["Content-Type", "Authorization", "Accept"],
             "supports_credentials": True,
-            "expose_headers": ["Content-Type"],
+            "expose_headers": ["Content-Type", "Access-Control-Allow-Origin"],
             "max_age": 120  # Preflight request cache time in seconds
         }
     }
@@ -794,15 +795,17 @@ def get_media_files():
 @login_required
 def get_media_file(file_id):
     try:
-        # Validate file_id
+        # Add debug logging
+        print(f"Attempting to fetch file: {file_id}")
+
         if not file_id or file_id == 'undefined':
+            print("Invalid file ID received")
             return jsonify({'error': 'Invalid file ID'}), 400
 
         try:
-            # Convert string ID to ObjectId
             file_id = ObjectId(file_id)
         except Exception as e:
-            print(f"Invalid ObjectId format: {file_id}")
+            print(f"Invalid ObjectId format: {file_id}, error: {e}")
             return jsonify({'error': 'Invalid file ID format'}), 400
 
         # Check if file exists in GridFS
@@ -813,34 +816,36 @@ def get_media_file(file_id):
         # Get file from GridFS
         file = fs.get(file_id)
         if not file:
+            print(f"Could not retrieve file from GridFS: {file_id}")
             return jsonify({'error': 'File not found'}), 404
 
-        # First check in multimedia collection
+        # Get media info from collections
         media_info = multimedia_collection.find_one({
             '$or': [
                 {'file_id': str(file_id)},
                 {'file_id': file_id}
-            ],
-            'email': current_user.email
+            ]
         })
 
-        # If not found in multimedia collection, check trash collection
-        if not media_info:
-            media_info = trash_collection.find_one({
-                '$or': [
-                    {'file_id': str(file_id)},
-                    {'file_id': file_id}
-                ],
-                'email': current_user.email
-            })
-
-        if not media_info:
-            return jsonify({'error': 'Unauthorized'}), 403
+        print(f"Media info found: {media_info}")
 
         # Create response with file data and proper headers
         response = make_response(file.read())
-        response.mimetype = file.content_type or 'application/octet-stream'
-        response.headers['Content-Type'] = file.content_type or 'application/octet-stream'
+        
+        # Set content type based on file type
+        content_type = media_info.get('content_type') if media_info else None
+        if not content_type:
+            # Try to get content type from GridFS file
+            content_type = file.content_type
+        
+        if not content_type:
+            # Default to octet-stream if no content type found
+            content_type = 'application/octet-stream'
+            
+        print(f"Serving file with content type: {content_type}")
+        
+        response.mimetype = content_type
+        response.headers['Content-Type'] = content_type
         response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
         response.headers['Pragma'] = 'no-cache'
         response.headers['Expires'] = '0'
@@ -896,35 +901,56 @@ def get_user_media():
 @login_required
 def get_media_counts():
     try:
-        # Get counts from multimedia_collection
-        image_count = multimedia_collection.count_documents({
-            'email': current_user.email, 
-            'type': 'image'
-        })
-        video_count = multimedia_collection.count_documents({
-            'email': current_user.email, 
-            'type': 'video'
-        })
-        audio_count = multimedia_collection.count_documents({
-            'email': current_user.email, 
-            'type': 'audio'
-        })
-        translation_count = translations_collection.count_documents({
-            'email': current_user.email
-        })
-        documentation_count = multimedia_collection.count_documents({
-            'email': current_user.email,
-            'type': 'documentation',
-            'source': 'documentation'
-        })
+        # Get current time boundaries
+        now = datetime.now()
+        today_start = datetime(now.year, now.month, now.day)
+        month_start = datetime(now.year, now.month, 1)
 
-        return jsonify({
-            'image_count': image_count,
-            'video_count': video_count,
-            'audio_count': audio_count,
-            'translation_count': translation_count,
-            'documentation_count': documentation_count  # Add this line
-        })
+        # Convert to timestamps for MongoDB queries
+        today_timestamp = today_start.timestamp()
+        month_timestamp = month_start.timestamp()
+
+        # Today's data
+        today_query = {
+            'email': current_user.email,
+            'timestamp': {'$gte': today_timestamp}
+        }
+        
+        # Monthly data
+        month_query = {
+            'email': current_user.email,
+            'timestamp': {'$gte': month_timestamp}
+        }
+        
+        # Overall data (no time filter)
+        overall_query = {'email': current_user.email}
+
+        response_data = {
+            # Today's counts
+            'today_image_count': multimedia_collection.count_documents({**today_query, 'type': 'image'}),
+            'today_video_count': multimedia_collection.count_documents({**today_query, 'type': 'video'}),
+            'today_audio_count': multimedia_collection.count_documents({**today_query, 'type': 'audio'}),
+            'today_translation_count': translations_collection.count_documents(today_query),
+            'today_documentation_count': multimedia_collection.count_documents({**today_query, 'type': 'documentation'}),
+            
+            # Monthly counts
+            'monthly_image_count': multimedia_collection.count_documents({**month_query, 'type': 'image'}),
+            'monthly_video_count': multimedia_collection.count_documents({**month_query, 'type': 'video'}),
+            'monthly_audio_count': multimedia_collection.count_documents({**month_query, 'type': 'audio'}),
+            'monthly_translation_count': translations_collection.count_documents(month_query),
+            'monthly_documentation_count': multimedia_collection.count_documents({**month_query, 'type': 'documentation'}),
+            
+            # Overall counts
+            'image_count': multimedia_collection.count_documents({**overall_query, 'type': 'image'}),
+            'video_count': multimedia_collection.count_documents({**overall_query, 'type': 'video'}),
+            'audio_count': multimedia_collection.count_documents({**overall_query, 'type': 'audio'}),
+            'translation_count': translations_collection.count_documents(overall_query),
+            'documentation_count': multimedia_collection.count_documents({**overall_query, 'type': 'documentation'})
+        }
+
+        print("Debug - Media counts:", response_data)  # Debug log
+        return jsonify(response_data)
+
     except Exception as e:
         print(f"Error getting media counts: {e}")
         return jsonify({'error': str(e)}), 500
@@ -1274,6 +1300,73 @@ def permanently_delete():
             'status': 'error'
         }), 500
 
+@app.route('/admin/delete-user/<email>', methods=['DELETE', 'OPTIONS'])
+def delete_user(email):
+    response = make_response()
+    response.headers.add('Access-Control-Allow-Origin', 'http://localhost:5173')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    
+    if request.method == 'OPTIONS':
+        response.headers.add('Access-Control-Allow-Methods', 'DELETE, OPTIONS')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        return response
+
+    try:
+        # 1. Delete GridFS files first
+        media_files = multimedia_collection.find({'email': email})
+        for file in media_files:
+            if 'file_id' in file:
+                try:
+                    file_id = ObjectId(file['file_id'])
+                    if fs.exists(file_id):
+                        fs.delete(file_id)
+                except Exception as e:
+                    print(f"GridFS delete error: {e}")
+
+        # 2. Delete from all collections
+        collections_to_clean = [
+            (multimedia_collection, {'email': email}),
+            (translations_collection, {'email': email}),
+            (trash_collection, {'email': email}),
+            (db['interested customer'], {'user_email': email})
+        ]
+
+        for collection, query in collections_to_clean:
+            try:
+                collection.delete_many(query)
+            except Exception as e:
+                print(f"Collection cleanup error: {e}")
+
+        # 3. Delete user folder
+        try:
+            user_folder = os.path.join(app.config['UPLOAD_FOLDER'], email)
+            if os.path.exists(user_folder):
+                import shutil
+                shutil.rmtree(user_folder)
+        except Exception as e:
+            print(f"Folder deletion error: {e}")
+
+        # 4. Delete user from users collection
+        users_collection.delete_one({'email': email})
+
+        response = make_response(jsonify({
+            'message': 'User and associated data deleted successfully',
+            'status': 'success'
+        }))
+        response.headers.add('Access-Control-Allow-Origin', 'http://localhost:5173')
+        response.headers.add('Access-Control-Allow-Credentials', 'true')
+        return response
+
+    except Exception as e:
+        print(f"Delete user error: {e}")
+        error_response = make_response(jsonify({
+            'error': str(e),
+            'status': 'error'
+        }))
+        error_response.headers.add('Access-Control-Allow-Origin', 'http://localhost:5173')
+        error_response.headers.add('Access-Control-Allow-Credentials', 'true')
+        return error_response, 500
+
 @app.errorhandler(500)
 def internal_error(error):
     print(f"Internal error: {str(error)}")
@@ -1297,19 +1390,6 @@ def initialize_nltk_quietly():
         nltk.download('punkt', quiet=True)
         nltk.download('stopwords', quiet=True)
 
-if __name__ == '__main__':
-    try:
-        # Initialize NLTK quietly
-        initialize_nltk_quietly()
-        
-        # Ensure required collections exist
-        if not users_collection or not userdata_collection:
-            raise RuntimeError("MongoDB collections not properly initialized")
-        
-        app.run(debug=True)
-        
-    except Exception as e:
-        print(f"Failed to start application: {str(e)}")
 
 # Remove all existing serve_file routes and replace with these two routes
 @app.route('/admin/profile-image/<user>/<filename>', methods=['GET'])
@@ -1342,3 +1422,18 @@ def serve_user_file(user, filename):
     except Exception as e:
         print(f"Error serving user file: {e}")
         return jsonify({'error': 'File not found'}), 404
+
+if __name__ == '__main__':
+    try:
+        # Initialize NLTK quietly
+        initialize_nltk_quietly()
+        
+        # Ensure required collections exist
+        if not users_collection or not userdata_collection:
+            raise RuntimeError("MongoDB collections not properly initialized")
+        
+        app.run(debug=True)
+        
+    except Exception as e:
+        print(f"Failed to start application: {str(e)}")
+

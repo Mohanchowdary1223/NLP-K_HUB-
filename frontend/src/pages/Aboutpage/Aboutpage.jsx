@@ -277,7 +277,7 @@ const Aboutpage = () => {
           <button className="cta-button-doc">
             Wanna Try <span>&#8594;</span>
           </button>
-        </Link>{" "}
+        </Link>
       </div>
 
       <Footer />

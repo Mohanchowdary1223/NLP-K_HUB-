@@ -30,22 +30,37 @@ ChartJS.register(
 );
 
 const UserReport = () => {
-  const [reportType, setReportType] = useState('overall');
   const [userData, setUserData] = useState(null);
+  const [uploadsData, setUploadsData] = useState(null);
 
   useEffect(() => {
     fetchUserGrowthData();
-  }, [reportType]);
+    fetchUploadsData();
+  }, []);
 
   const fetchUserGrowthData = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/user-growth?type=${reportType}`, {
+      const response = await fetch(`http://localhost:5000/user-growth?type=overall`, {
         credentials: 'include'
       });
       const data = await response.json();
       setUserData(data);
     } catch (error) {
       console.error('Error fetching user growth data:', error);
+    }
+  };
+
+  const fetchUploadsData = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/media/counts', {
+        credentials: 'include'
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setUploadsData(data);
+      }
+    } catch (error) {
+      console.error('Error fetching uploads data:', error);
     }
   };
 
@@ -72,30 +87,86 @@ const UserReport = () => {
   };
 
   const getFeatureUsageData = () => {
-    const periods = {
-      weekly: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-      monthly: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-      overall: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']
+    if (!uploadsData) return {
+      labels: ['Images', 'Videos', 'Audio', 'Translations', 'Synopsis'],
+      datasets: [{
+        label: 'Total Uploads',
+        data: [0, 0, 0, 0, 0],
+        backgroundColor: [
+          'rgba(255, 99, 132, 0.7)',
+          'rgba(54, 162, 235, 0.7)',
+          'rgba(75, 192, 192, 0.7)',
+          'rgba(153, 102, 255, 0.7)',
+          'rgba(255, 159, 64, 0.7)',
+        ],
+        borderColor: [
+          'rgba(255, 99, 132, 1)',
+          'rgba(54, 162, 235, 1)',
+          'rgba(75, 192, 192, 1)',
+          'rgba(153, 102, 255, 1)',
+          'rgba(255, 159, 64, 1)',
+        ],
+        borderWidth: 1
+      }]
     };
+
     return {
-      labels: periods[reportType],
-      datasets: [
-        { label: 'Image to Text', data: reportType === 'weekly' ? [45, 55, 65, 75, 60, 50, 70] : reportType === 'monthly' ? [200, 240, 270, 220] : [800, 1000, 1200, 1500, 1700, 1900], backgroundColor: 'rgba(255, 99, 132, 0.5)' },
-        { label: 'Video to Text', data: reportType === 'weekly' ? [35, 45, 55, 65, 50, 40, 60] : reportType === 'monthly' ? [180, 220, 250, 200] : [600, 800, 1000, 1300, 1500, 1700], backgroundColor: 'rgba(54, 162, 235, 0.5)' },
-        { label: 'Audio to Text', data: reportType === 'weekly' ? [25, 35, 45, 55, 40, 30, 50] : reportType === 'monthly' ? [160, 200, 230, 180] : [400, 600, 800, 1100, 1300, 1500], backgroundColor: 'rgba(75, 192, 192, 0.5)' },
-        { label: 'Language Translation', data: reportType === 'weekly' ? [15, 25, 35, 45, 30, 20, 40] : reportType === 'monthly' ? [140, 180, 210, 160] : [200, 400, 600, 900, 1100, 1300], backgroundColor: 'rgba(153, 102, 255, 0.5)' }
-      ]
+      labels: ['Images', 'Videos', 'Audio', 'Translations', 'Synopsis'],
+      datasets: [{
+        label: 'Total Uploads',
+        data: [
+          uploadsData.image_count || 0,
+          uploadsData.video_count || 0,
+          uploadsData.audio_count || 0,
+          uploadsData.translation_count || 0,
+          uploadsData.documentation_count || 0,
+        ],
+        backgroundColor: [
+          'rgba(255, 99, 132, 0.7)',
+          'rgba(54, 162, 235, 0.7)',
+          'rgba(75, 192, 192, 0.7)',
+          'rgba(153, 102, 255, 0.7)',
+          'rgba(255, 159, 64, 0.7)',
+        ],
+        borderColor: [
+          'rgba(255, 99, 132, 1)',
+          'rgba(54, 162, 235, 1)',
+          'rgba(75, 192, 192, 1)',
+          'rgba(153, 102, 255, 1)',
+          'rgba(255, 159, 64, 1)',
+        ],
+        borderWidth: 1
+      }]
     };
   };
 
-  const options = { responsive: true, plugins: { legend: { position: 'top' }, title: { display: true, text: 'User Growth' } } };
-  const featureOptions = { responsive: true, plugins: { legend: { position: 'top' }, title: { display: true, text: 'Feature Usage Statistics' } } };
+  const options = {
+    responsive: true,
+    plugins: {
+      legend: { position: 'top' },
+      title: { display: true, text: 'Overall User Growth' }
+    }
+  };
+
+  const featureOptions = {
+    responsive: true,
+    plugins: {
+      legend: { position: 'top' },
+      title: { display: true, text: 'Total Uploads Distribution' }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: { stepSize: 1 }
+      }
+    }
+  };
 
   return (
     <div className="admin-container">
       <div className="admin-content">
         <div className='navbar-a'>
-    <img src={logoImage} alt="Logo" className="logo-image-admin" />
+          <img src={logoImage} alt="Logo" className="logo-image-admin" />
           <div className="nav-links">
             <NavLink to='/userdata' className="nav-link">Users List</NavLink>
             <NavLink to='/userreport' className="nav-link">Report</NavLink>
@@ -103,13 +174,6 @@ const UserReport = () => {
           </div>
         </div>
         <div className="report-container">
-          <div className="report-header">
-            <div className="report-tabs">
-              <button className={`report-tab ${reportType === 'overall' ? 'active' : ''}`} onClick={() => setReportType('overall')}>Overall Report</button>
-              <button className={`report-tab ${reportType === 'monthly' ? 'active' : ''}`} onClick={() => setReportType('monthly')}>Monthly Report</button>
-              <button className={`report-tab ${reportType === 'weekly' ? 'active' : ''}`} onClick={() => setReportType('weekly')}>Weekly Report</button>
-            </div>
-          </div>
           <div className="charts-container">
             <div className="chart-wrapper">
               <Line options={options} data={getChartData()} />

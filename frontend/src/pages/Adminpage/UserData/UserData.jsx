@@ -141,32 +141,34 @@ const UserData = () => {
 
   const handleDeleteConfirm = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/admin/delete-user/${userToDelete.email}`, {
-        method: 'DELETE',
-        credentials: 'include',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
+        const response = await fetch(`http://localhost:5000/admin/delete-user/${userToDelete.email}`, {
+            method: 'DELETE',
+            credentials: 'include',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            }
+        });
+
+        console.log('Delete response status:', response.status); // Debug log
+
+        const data = await response.json();
+        console.log('Delete response data:', data); // Debug log
+
+        if (response.ok && data.status === 'success') {
+            // Remove user from local state
+            setUsers(prev => prev.filter(user => user.email !== userToDelete.email));
+            setShowDeleteConfirm(false);
+            setUserToDelete(null);
+            alert('User deleted successfully');
+        } else {
+            throw new Error(data.error || 'Failed to delete user');
         }
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete user');
-      }
-
-      const data = await response.json();
-      console.log('Delete response:', data);
-
-      // Remove user from local state
-      setUsers(users.filter(user => user.email !== userToDelete.email));
-      setShowDeleteConfirm(false);
-      setUserToDelete(null);
     } catch (error) {
-      console.error('Error deleting user:', error);
-      alert('Failed to delete user. Please try again.');
+        console.error('Error deleting user:', error);
+        alert(`Failed to delete user: ${error.message}`);
     }
-  };
+};
 
   // Add this function to handle PDF display
   const renderPDFPreview = (doc) => {
@@ -422,33 +424,39 @@ const MessagesSection = ({ user }) => {
                 <div className="media-list">
                   {selectedUser.images && selectedUser.images.length > 0 ? (
                     selectedUser.images.map((image, index) => {
-                        console.log('Image data:', image); // Debug log
-                        return (
-                            <div key={index} className="media-item">
-                                <img
-                                    src={`http://localhost:5000/media/file/${image.file_id}`}
-                                    alt={image.filename || 'Image'}
-                                    className="media-thumbnail"
-                                    onError={(e) => {
-                                        console.error("Error loading image:", e);
-                                        e.target.style.display = 'none';
-                                        e.target.parentElement.innerHTML = 'Failed to load image';
-                                    }}
-                                />
-                                <div className="media-details">
-                                    <p className="filename">{image.filename}</p>
-                                    <p className="extracted-text">
-                                        {image.extracted_text || 'No extracted text available'}
-                                    </p>
-                                    <p className="timestamp">
-                                        {image.timestamp ? new Date(image.timestamp * 1000).toLocaleString() : 'No timestamp'}
-                                    </p>
-                                </div>
-                            </div>
-                        );
+                      console.log('Rendering image:', image); // Debug log
+                      const imageUrl = `http://localhost:5000/media/file/${image.file_id}`;
+                      return (
+                        <div key={index} className="media-item">
+                          <div className="image-container">
+                            <img
+                              src={imageUrl}
+                              alt={image.filename || 'Image'}
+                              className="media-thumbnail"
+                              onError={(e) => {
+                                console.error(`Error loading image: ${imageUrl}`);
+                                e.target.src = 'https://via.placeholder.com/150?text=Image+Load+Error';
+                              }}
+                            />
+                          </div>
+                          <div className="media-details">
+                            <p className="filename">{image.filename || 'Unnamed image'}</p>
+                            {image.extracted_text && (
+                              <p className="extracted-text">
+                                {image.extracted_text.slice(0, 100)}...
+                              </p>
+                            )}
+                            <p className="timestamp">
+                              {image.timestamp 
+                                ? new Date(image.timestamp * 1000).toLocaleString()
+                                : 'No timestamp available'}
+                            </p>
+                          </div>
+                        </div>
+                      );
                     })
                   ) : (
-                    <p>No image uploads found.</p>
+                    <p className="no-data">No image uploads found.</p>
                   )}
                 </div>
               </div>
@@ -534,12 +542,55 @@ const MessagesSection = ({ user }) => {
               </div>
 
               {/* Synopsis Section */}
-              <div
-                className={`popup-content-section ${
-                  activeTab === "synopsis" ? "active" : ""
-                }`}
-              >
-                <SynopsisSection user={selectedUser} />
+              <div className={`popup-content-section ${activeTab === "synopsis" ? "active" : ""}`}>
+                {selectedUser.documentation && selectedUser.documentation.length > 0 ? (
+                  <div className="synopsis-list">
+                    {selectedUser.documentation.map((doc, index) => {
+                      console.log('Rendering document:', doc); // Debug log
+                      return (
+                        <div key={index} className="synopsis-item">
+                          <div className="document-header">
+                            <h4>{doc.filename || 'Untitled Document'}</h4>
+                            <span className="document-time">
+                              {doc.timestamp 
+                                ? new Date(doc.timestamp * 1000).toLocaleString()
+                                : 'No date'}
+                            </span>
+                          </div>
+                          <div className="document-content">
+                            {doc.file_id && doc.content_type?.includes('pdf') ? (
+                              <iframe
+                                src={`http://localhost:5000/media/file/${doc.file_id}`}
+                                width="100%"
+                                height="500px"
+                                title={doc.filename || 'PDF Document'}
+                                className="pdf-preview"
+                                onError={(e) => {
+                                  console.error(`Error loading PDF: ${doc.file_id}`);
+                                  e.target.style.display = 'none';
+                                  e.target.parentElement.innerHTML = 'Failed to load PDF';
+                                }}
+                              />
+                            ) : (
+                              <div className="text-content">
+                                <h5>Content Summary</h5>
+                                <p>{doc.summary || 'No summary available'}</p>
+                                {doc.extracted_text && (
+                                  <div className="extracted-text">
+                                    <h5>Extracted Text</h5>
+                                    <p>{doc.extracted_text.slice(0, 300)}...</p>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="no-data">No synopsis or documentation found.</p>
+                )}
               </div>
 
               {/* Messages Section */}
@@ -601,13 +652,30 @@ const MessagesSection = ({ user }) => {
         {showDeleteConfirm && (
           <div className="popup-overlay" onClick={() => setShowDeleteConfirm(false)}>
             <div className="delete-confirmation-popup" onClick={e => e.stopPropagation()}>
-              <h3>Confirm Action</h3>
-              <p>Are you sure you want to deactivate or delete this user account?</p>
+              <h3>⚠️ Warning: Permanent Deletion</h3>
+              <p>Are you sure you want to permanently delete this user?</p>
+              <div className="delete-warning">
+                <p>This will delete:</p>
+                <ul>
+                  <li>User account and profile</li>
+                  <li>All uploaded images, videos, and audio files</li>
+                  <li>All translations and synopsis</li>
+                  <li>All messages and communications</li>
+                  <li>All associated data in the system</li>
+                </ul>
+                <p><strong>This action cannot be undone.</strong></p>
+              </div>
               <div className="delete-confirmation-buttons">
-                <button className="confirm-button" onClick={handleDeleteConfirm}>
-                  Yes
+                <button 
+                  className="confirm-button"
+                  onClick={handleDeleteConfirm}
+                >
+                  Yes, Delete Everything
                 </button>
-                <button className="cancel-button" onClick={() => setShowDeleteConfirm(false)}>
+                <button 
+                  className="cancel-button"
+                  onClick={() => setShowDeleteConfirm(false)}
+                >
                   Cancel
                 </button>
               </div>
@@ -732,6 +800,65 @@ export default UserData;
     margin-top: 15px;
     padding-top: 15px;
     border-top: 1px solid #eee;
+  }
+
+  .delete-confirmation-popup {
+    background: white;
+    padding: 25px;
+    border-radius: 8px;
+    max-width: 500px;
+    width: 90%;
+  }
+
+  .delete-warning {
+    margin: 15px 0;
+    color: #d32f2f;
+    background: #ffebee;
+    padding: 15px;
+    border-radius: 4px;
+  }
+
+  .delete-warning ul {
+    margin: 10px 0;
+    padding-left: 20px;
+  }
+
+  .delete-warning li {
+    margin: 5px 0;
+  }
+
+  .delete-confirmation-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    justify-content: flex-end;
+  }
+
+  .confirm-button {
+    background: #d32f2f;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+
+  .confirm-button:hover {
+    background: #b71c1c;
+  }
+
+  .cancel-button {
+    background: #e0e0e0;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+
+  .cancel-button:hover {
+    background: #bdbdbd;
   }
 `}
 </style>
